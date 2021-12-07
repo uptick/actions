@@ -1,7 +1,7 @@
 name: 'Shame'
 description: 'Shame someone for failure'
 inputs:
-  WEBHOOK_SLACK_URL:  # id of input
+  SLACK_WEBHOOK_URL:  # id of input
     description: 'Slack webhook url'
     required: true
 runs:
@@ -22,4 +22,4 @@ runs:
             }]
           }
       env:
-        SLACK_WEBHOOK_URL: ${{ inputs.WEBHOOK_SLACK_URL }}
+        SLACK_WEBHOOK_URL: ${{ inputs.SLACK_WEBHOOK_URL}}
