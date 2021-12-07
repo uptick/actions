@@ -1,0 +1,25 @@
+name: 'Shame'
+description: 'Shame someone for failure'
+inputs:
+  WEBHOOK_SLACK_URL:  # id of input
+    description: 'Slack webhook url'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    -
+      name: Slack on error
+      if:   (contains(env.BRANCH_NAME, 'release') || contains(env.BRANCH_NAME, 'develop')) && failure()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: custom
+        fields: workflow,job,commit,repo,ref,author,took
+        custom_payload: |
+          {
+            attachments: [{
+              color: '${{ job.status }}' === 'success' ? 'good' : '${{ job.status }}' === 'failure' ? 'danger' : 'warning',
+              text: `:poop: *SHAME!* :poop:\n${process.env.AS_JOB} (${process.env.AS_COMMIT}) of ${process.env.AS_REPO}@${process.env.AS_REF} by ${process.env.AS_AUTHOR} ${{ job.status }} in ${process.env.AS_TOOK}`,
+            }]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ inputs.WEBHOOK_SLACK_URL }}
