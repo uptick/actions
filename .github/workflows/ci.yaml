@@ -1,0 +1,229 @@
+# Our AIO CI pipeline that can be used for anything and comes with default best practices
+# behind caching, slack alerting and more.
+# Using this will force us to ensure our projects are all standardized
+# TODO:
+# - slack alerting
+# - slack praising UPDATE of existing message
+# - docker file installing/building : Important for us to set best practices for this
+# - yarn? nah...
+# - instrumentation
+# - dependency scanning????
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: "Version of python to install"
+        type: string
+        default: "3.10"
+
+      python:
+        description: "Install python?"
+        type: boolean
+        default: false
+
+      # Pip Settings # TODO
+      pip-install:
+        description: "Run pip install"
+        type: boolean
+        default: false
+
+      pip-install-requirements-path:
+        description: "Set the path to the requirements file"
+        type: string
+        default: "requirements.txt"
+
+      # Poetry Settings
+      poetry:
+        description: "Install and setup poetry"
+        type: boolean
+        default: false
+
+      poetry-install:
+        description: "Install poetry dependencies (including dev)"
+        type: boolean
+        default: true
+
+      poetry-version:
+        description: "Poetry version to install"
+        type: string
+        default: "1.2.2"
+
+      # Node Settings
+      node:
+        description: "Install node?"
+        type: boolean
+        default: false
+
+      node-version:
+        description: "Version of node to install"
+        type: string
+        default: "16"
+
+      # PNPM SETTINGS
+      pnpm:
+        description: "Install and set up pnpm"
+        type: boolean
+        default: false
+
+      pnpm-install:
+        description: "Install pnpm dependencies"
+        type: boolean
+        default: true
+
+      pnpm-build:
+        description: "Run PNPM Build"
+        type: boolean
+        default: true
+
+      # Slack error settings # TODO
+      slack-on-error:
+        description: "Emit"
+        type: boolean
+        default: false
+
+      praise-on-fix:
+        description: "Emit"
+        type: boolean
+        default: false
+
+      # CI command
+      command:
+        description: "The primary command to run. Defaults to make ci (but it can also be a bash script)"
+        type: string
+        default: "make ci"
+
+      # AWS Settings
+      aws:
+        description: "If enabled set up AWS Credentials"
+        type: boolean
+        default: false
+
+      aws-iam-role-arn:
+        description: "AWS IAM Role to assume"
+        type: string
+        default: "arn:aws:iam::305686791668:role/default-github-actions-ci-role"
+
+env:
+  PYTHONUNBUFFERED: 1
+
+    # secrets:
+    #   envPAT:
+    #     required: true
+
+
+permissions:
+  id-token: write # Required for federated aws oidc
+  contents: read # Required to checkout from a sub repo
+  # actions: read # What for?
+  # pull-requests: write # What for?
+
+
+jobs:
+  ci:
+    runs-on: ubuntu-22.04
+    steps:
+
+    - name: Set environment variables
+      shell: bash
+      run: |
+        if [[ ${{github.event_name}} == 'push' ]];
+        then
+          echo "GITHUB_EVENT=push" >> $GITHUB_ENV
+          echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} )" >> $GITHUB_ENV
+        else
+          echo "GITHUB_EVENT=pull_request" >> $GITHUB_ENV
+          echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} )" >> $GITHUB_ENV
+        fi;
+        echo "GIT_SHORT_HASH=${{github.sha}}" | cut -c -22  >> $GITHUB_ENV
+        echo "GITHUB_REPOSITORY=${{github.repository}}" | sed 's/\//-/g' >> $GITHUB_ENV
+        cat $GITHUB_ENV
+
+    - name: Setup and Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      if:  inputs.aws
+      with:
+        role-to-assume: ${{ inputs.aws-iam-role-arn }}
+        role-session-name: ${{ env.GITHUB_REPOSITORY }}
+        aws-region: ap-southeast-2
+
+
+    ### PYTHON AND POETRY STUFF
+    #
+    - name: Install Python
+      if: inputs.python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Checkout Code
+      uses: actions/checkout@v3
+      with:
+        # TODO: Configure fetch-depth?
+        fetch-depth: 2
+
+    - name: Setup and Configure Poetry
+      if: inputs.poetry
+      run:
+        pip3 install poetry==${{ inputs.poetry-version }}
+
+    - name: Cache Poetry Dependencies
+      uses: actions/cache@v2
+      if: inputs.poetry
+      with:
+        path: ~/.cache/pypoetry
+        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
+
+    - name: Poetry Install Dependencies
+      if: inputs.poetry && inputs.poetry-install
+      run: |
+        poetry install
+
+    ##### NODE AND PNPM STUFF
+    #
+    - name: Install Node
+      if: inputs.node
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Install PNPM
+      if: inputs.pnpm
+      uses: pnpm/action-setup@v2.2.4
+      with:
+        version: next-7
+
+    - name: Get PNPM Cache Directory
+      if: inputs.pnpm
+      id: pnpm-cache
+      shell: bash
+      run: |
+        echo "::set-output name=pnpm_cache_dir::$(pnpm store path)"
+
+    - name: Setup PNPM Cache
+      uses: actions/cache@v3
+      if: inputs.pnpm
+      with:
+        path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+
+    - name: Install PNPM Dependencies
+      if: inputs.pnpm && inputs.pnpm-install
+      shell: bash
+      run: |
+        pnpm install
+
+    - name: PNPM Build
+      if: inputs.pnpm && inputs.pnpm-build
+      shell: bash
+      run: |
+        pnpm build
+
+    - name: Run CI Command
+      shell: bash
+      run: |
+        ${{ inputs.command }}
