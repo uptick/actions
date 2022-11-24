@@ -13,12 +13,11 @@ Features:
 - Best practice selection of python version / node / poetry
 - Caching for Poetry/PNPM
 - Signing into AWS via OIDC
-- Slack Shaming
+- Slack Shaming / Praising
 
 TODO Features:
 
 - Building docker image
-- Slack Praising
 - Metric recording on CI step durations
 
 **Usage:**
