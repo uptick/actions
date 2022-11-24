@@ -9,8 +9,17 @@
 # - instrumentation
 # - dependency scanning????
 
+
 on:
   workflow_call:
+    secrets:
+      SLACK_TOKEN:
+        description: "Slack API Token. Used to get the slack user for blaming AND to create a message in channel"
+        required: true
+      SLACK_CHANNEL:
+        description: "Slack channel to post error messages to"
+        required: false
+
     inputs:
       python-version:
         description: "Version of python to install"
@@ -23,15 +32,15 @@ on:
         default: false
 
       # Pip Settings # TODO
-      pip-install:
-        description: "Run pip install"
-        type: boolean
-        default: false
+      # pip-install:
+      #   description: "Run pip install"
+      #   type: boolean
+      #   default: false
 
-      pip-install-requirements-path:
-        description: "Set the path to the requirements file"
-        type: string
-        default: "requirements.txt"
+      # pip-install-requirements-path:
+      #   description: "Set the path to the requirements file"
+      #   type: string
+      #   default: "requirements.txt"
 
       # Poetry Settings
       poetry:
@@ -80,12 +89,23 @@ on:
       slack-on-error:
         description: "Emit"
         type: boolean
-        default: false
+        default: true
+
+      # Slack error settings
+      shame-on-error:
+        description: "Create a slack message in a channel mapped"
+        type: boolean
+        default: true
 
       praise-on-fix:
-        description: "Emit"
+        description: "Update a slack message in a channel when it has been fixed"
         type: boolean
-        default: false
+        default: true
+
+      slack-channel:
+        description: "Channel to emit slack error messages to. Leave default for default mappings."
+        type: string
+        default: "devops-test-slack"
 
       # CI command
       command:
@@ -104,12 +124,12 @@ on:
         type: string
         default: "arn:aws:iam::305686791668:role/default-github-actions-ci-role"
 
+      debug:
+        description: "Dump context"
+        type: boolean
+        default: false
 env:
   PYTHONUNBUFFERED: 1
-
-    # secrets:
-    #   envPAT:
-    #     required: true
 
 
 permissions:
@@ -123,6 +143,17 @@ jobs:
   ci:
     runs-on: ubuntu-22.04
     steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+      with:
+        # TODO: Configure fetch-depth?
+        fetch-depth: 2
+
+    - name: Dump GitHub context
+      if: inputs.debug
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: echo "$GITHUB_CONTEXT"
 
     - name: Set environment variables
       shell: bash
@@ -131,11 +162,14 @@ jobs:
         then
           echo "GITHUB_EVENT=push" >> $GITHUB_ENV
           echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} )" >> $GITHUB_ENV
+          echo "GIT_SHORT_HASH=${{github.sha}}" | cut -c -22  >> $GITHUB_ENV
         else
           echo "GITHUB_EVENT=pull_request" >> $GITHUB_ENV
           echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} )" >> $GITHUB_ENV
+          export GIT_HEAD_SHA=${{github.event.pull_request.head.sha}}
+          export GIT_SHORT_HASH=$(echo $GIT_HEAD_SHA | cut -c -7)
+          echo "GIT_SHORT_HASH=$GIT_SHORT_HASH" >> $GITHUB_ENV
         fi;
-        echo "GIT_SHORT_HASH=${{github.sha}}" | cut -c -22  >> $GITHUB_ENV
         echo "GITHUB_REPOSITORY=${{github.repository}}" | sed 's/\//-/g' >> $GITHUB_ENV
         cat $GITHUB_ENV
 
@@ -155,12 +189,6 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ inputs.python-version }}
-
-    - name: Checkout Code
-      uses: actions/checkout@v3
-      with:
-        # TODO: Configure fetch-depth?
-        fetch-depth: 2
 
     - name: Setup and Configure Poetry
       if: inputs.poetry
@@ -227,3 +255,23 @@ jobs:
       shell: bash
       run: |
         ${{ inputs.command }}
+
+    - name: Shame On Error
+      if:   (startsWith(env.BRANCH_NAME, 'release') || startsWith(env.BRANCH_NAME, 'develop') || startsWith(env.BRANCH_NAME, 'main')) && inputs.shame-on-error && failure()
+      id: shame_on_error
+      uses: uptick/actions-shame@main
+      with:
+        command: "shame"
+        SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+        SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL || inputs.slack-channel }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Praise On Fix
+      id: praise_on_fix
+      if:   (startsWith(env.BRANCH_NAME, 'release') || startsWith(env.BRANCH_NAME, 'develop') || startsWith(env.BRANCH_NAME, 'main')) && inputs.praise-on-fix && success()
+      uses: uptick/actions-shame@main
+      with:
+        command: "praise"
+        SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+        SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL || inputs.slack-channel }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
