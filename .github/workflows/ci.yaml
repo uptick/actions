@@ -170,7 +170,8 @@ jobs:
           export GIT_SHORT_HASH=$(echo $GIT_HEAD_SHA | cut -c -7)
           echo "GIT_SHORT_HASH=$GIT_SHORT_HASH" >> $GITHUB_ENV
         fi;
-        echo "GITHUB_REPOSITORY=${{github.repository}}" | sed 's/\//-/g' >> $GITHUB_ENV
+        echo "GITHUB_REPOSITORY=${{github.repository}}"
+        echo "AWS_SESSION_NAME=${{github.repository}}" | sed 's/\//-/g' >> $GITHUB_ENV
         cat $GITHUB_ENV
 
     - name: Setup and Configure AWS Credentials
@@ -178,7 +179,7 @@ jobs:
       if:  inputs.aws
       with:
         role-to-assume: ${{ inputs.aws-iam-role-arn }}
-        role-session-name: ${{ env.GITHUB_REPOSITORY }}
+        role-session-name: ${{ env.AWS_SESSION_NAME}}
         aws-region: ap-southeast-2
 
 
