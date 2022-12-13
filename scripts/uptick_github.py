@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 import os
+import urllib.error
 import urllib.request
 from functools import lru_cache
 from typing import Literal
@@ -52,16 +53,17 @@ class Github:
         if DEBUG:
             print(">>> FETCHING: ", url)
         url = f"{BASE_URL}{url}" if not url.startswith("https://") else url
-        with urllib.request.urlopen(
-            urllib.request.Request(
-                url,
-                headers=self.get_headers(),
-            )
-        ) as response:
-            data = json.loads(response.read())
-            if DEBUG:
-                print(json.dumps(data, indent=2))
-            return data
+        request = urllib.request.Request(url, headers=self.get_headers())
+        try:
+            with urllib.request.urlopen(request) as response:
+                data = json.loads(response.read())
+                if DEBUG:
+                    print(json.dumps(data, indent=2))
+                return data
+        except urllib.error.HTTPError as e:
+            print("Error fetching: {url}")
+            print(json.loads(e.file.read()))
+            raise e
 
     @lru_cache
     def get_github_run(self) -> dict:
