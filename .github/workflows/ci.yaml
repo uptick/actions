@@ -170,7 +170,7 @@ jobs:
           export GIT_SHORT_HASH=$(echo $GIT_HEAD_SHA | cut -c -7)
           echo "GIT_SHORT_HASH=$GIT_SHORT_HASH" >> $GITHUB_ENV
         fi;
-        echo "GITHUB_REPOSITORY=${{github.repository}}"
+        echo "GITHUB_REPOSITORY=${{github.repository}}" >> $GITHUB_ENV
         echo "AWS_SESSION_NAME=${{github.repository}}" | sed 's/\//-/g' >> $GITHUB_ENV
         cat $GITHUB_ENV
 
