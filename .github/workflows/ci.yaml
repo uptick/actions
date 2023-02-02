@@ -113,6 +113,28 @@ on:
         type: string
         default: "make ci"
 
+      # Docker Settings
+      docker-enabled:
+        description: "If enabled, build + push a docker image "
+        type: boolean
+        default: false
+
+      docker-prefix:
+        description: "Image tag to prefix. Eg: {subman}-aed1f13, where subman is the docker-prefix"
+        type: string
+        default: ""
+
+      docker-tag-latest:
+        description: "Tag the image as `latest`"
+        type: boolean
+        default: false
+
+      docker-repository:
+        description: "Required if specifying docker-enabled. This is the ECR repository. EG:  305686791668.dkr.ecr.ap-southeast-2.amazonaws.com/uptick"
+        type: string
+        default: ""
+
+
       # AWS Settings
       aws:
         description: "If enabled set up AWS Credentials"
@@ -176,7 +198,7 @@ jobs:
 
     - name: Setup and Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
-      if:  inputs.aws
+      if:  inputs.aws || inputs.docker-enabled
       with:
         role-to-assume: ${{ inputs.aws-iam-role-arn }}
         role-session-name: ${{ env.AWS_SESSION_NAME}}
@@ -256,6 +278,28 @@ jobs:
       shell: bash
       run: |
         ${{ inputs.command }}
+
+    - name: Set up Docker Buildx
+      if: inputs.docker-enabled
+      uses: docker/setup-buildx-action@v2
+
+    - name: Login to Amazon ECR Private
+      if: inputs.docker-enabled
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build and push image
+      id: docker_build_push
+      if: inputs.docker-enabled
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: Dockerfile
+        cache-from: type=gha
+        cache-to: type=gha, mode=max
+        push: true
+        # Default to just the git short hash. if docker-tag-latest ; also tag as the latest image
+        tags: ${{inputs.docker-repository}}:${{inputs.docker-prefix && format('{0}-', inputs.docker-prefix) || ''}}${{env.GIT_SHORT_HASH}}${{inputs.docker-tag-latest && format(',{0}:latest',inputs.docker-repository)|| ''}}
 
     - name: Shame On Error
       if:   (startsWith(env.BRANCH_NAME, 'release') || startsWith(env.BRANCH_NAME, 'develop') || startsWith(env.BRANCH_NAME, 'main')) && inputs.shame-on-error && failure()

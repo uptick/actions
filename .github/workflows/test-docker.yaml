@@ -1,0 +1,36 @@
+
+name: Test Docker
+on:
+  pull_request: {}
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write # Required for federated aws oidc
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  docker-prefix-specified:
+    uses: ./.github/workflows/ci.yaml
+    secrets: inherit
+    with:
+      command: echo good
+      debug: true
+      slack-channel: devops-test-slack
+      docker-enabled: true
+      docker-prefix: main
+      docker-tag-latest: true
+      docker-repository: 305686791668.dkr.ecr.ap-southeast-2.amazonaws.com/github-actions-ci
+
+  docker-no-prefix-specified:
+    uses: ./.github/workflows/ci.yaml
+    secrets: inherit
+    with:
+      command: echo good
+      debug: true
+      slack-channel: devops-test-slack
+      docker-enabled: true
+      docker-repository: 305686791668.dkr.ecr.ap-southeast-2.amazonaws.com/github-actions-ci
