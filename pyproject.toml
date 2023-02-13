@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "test"
+version = "0.1.0"
+description = "Test pyproject file to run poetry commands on"
+authors = ["william chu <william.chu@uptickhq.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "^2.28.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
