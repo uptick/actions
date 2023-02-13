@@ -53,6 +53,11 @@ on:
         type: boolean
         default: true
 
+      poetry-install-command:
+        description: "Specify a different command; defaults to (poetry install)"
+        type: string
+        default: "poetry install"
+
       poetry-version:
         description: "Poetry version to install"
         type: string
@@ -230,7 +235,7 @@ jobs:
     - name: Poetry Install Dependencies
       if: inputs.poetry && inputs.poetry-install
       run: |
-        poetry install
+        ${{ inputs.poetry-install-command }}
 
     ##### NODE AND PNPM STUFF
     #
