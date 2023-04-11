@@ -1,4 +1,4 @@
-name: Test Slack Error
+name: Test Checkout
 on:
   pull_request: {}
 
@@ -9,10 +9,11 @@ permissions:
   pull-requests: write
 
 jobs:
-  slack-error:
+  checkout-ref:
     uses: ./.github/workflows/ci.yaml
     secrets: inherit
     with:
+      checkout-ref: "main"
       command: echo good
       debug: true
       slack-channel: devops-test-slack
