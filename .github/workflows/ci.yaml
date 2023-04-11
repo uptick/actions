@@ -20,6 +20,10 @@ on:
         required: false
 
     inputs:
+      checkout-ssh-key:
+        description: "The ssh key if provided; to checkout the repo with"
+        type: string
+        default: ""
       checkout-ref:
         description: "The branch, tag or SHA to checkout. When empty defaults to default checkout branch"
         type: string
