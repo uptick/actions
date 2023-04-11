@@ -18,12 +18,11 @@ on:
       SLACK_CHANNEL:
         description: "Slack channel to post error messages to"
         required: false
-
-    inputs:
       checkout-ssh-key:
         description: "The ssh key if provided; to checkout the repo with"
-        type: string
-        default: ""
+        required: false
+
+    inputs:
       checkout-ref:
         description: "The branch, tag or SHA to checkout. When empty defaults to default checkout branch"
         type: string
@@ -180,6 +179,7 @@ jobs:
           # TODO: Configure fetch-depth?
           fetch-depth: 2
           ref: ${{ inputs.checkout-ref }}
+          ssh-key: ${{ secrets.checkout-ssh-key }}
 
       - name: Dump GitHub context
         if: inputs.debug
