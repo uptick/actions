@@ -13,6 +13,7 @@ jobs:
     uses: ./.github/workflows/ci.yaml
     secrets: inherit
     with:
+      command: echo good
       debug: true
       poetry: true
       poetry-install: true
