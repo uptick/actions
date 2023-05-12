@@ -1,4 +1,4 @@
-name: Test Slack Error
+name: Test Python
 on:
   pull_request: {}
 
