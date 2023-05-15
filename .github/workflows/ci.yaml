@@ -207,7 +207,7 @@ jobs:
           cat $GITHUB_ENV
 
       - name: Setup and Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         if: inputs.aws || inputs.docker-enabled
         with:
           role-to-assume: ${{ inputs.aws-iam-role-arn }}
@@ -218,7 +218,7 @@ jobs:
       #
       - name: Install Python
         if: inputs.python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: ${{ inputs.python-version }}
 
@@ -227,7 +227,7 @@ jobs:
         run: pip3 install poetry==${{ inputs.poetry-version }}
 
       - name: Cache Poetry Dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         if: inputs.poetry
         with:
           path: ~/.cache/pypoetry
@@ -244,7 +244,7 @@ jobs:
       #
       - name: Install Node
         if: inputs.node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ inputs.node-version }}
 
