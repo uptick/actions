@@ -69,6 +69,16 @@ on:
         type: string
         default: "1.4.0"
 
+      pypi-publish:
+        description: "Publish to pypi?"
+        type: boolean
+        default: false
+
+      pypi-repository-url:
+        description: "If pypi-publish and pypi-repository-url is set, publish to this pypi repository. Requires id-token: write"
+        type: string
+        default: "https://pypi.org/p/<your-pypi-project-name> or https://test.pypi.org/legacy/<project-name>"
+
       # Node Settings
       node:
         description: "Install node?"
@@ -160,6 +170,7 @@ on:
         description: "Dump context"
         type: boolean
         default: false
+
 env:
   PYTHONUNBUFFERED: 1
 
@@ -308,6 +319,13 @@ jobs:
           push: true
           # Default to just the git short hash. if docker-tag-latest ; also tag as the latest image
           tags: ${{inputs.docker-repository}}:${{inputs.docker-prefix && format('{0}-', inputs.docker-prefix) || ''}}${{env.GIT_SHORT_HASH}}${{inputs.docker-tag-latest && format(',{0}:latest',inputs.docker-repository)|| ''}}
+
+      - name: Publish Pypi Package
+        # This step expects a built package to be in the dist/ directory
+        if: inputs.pypi-publish && inputs.pypi-repository-url
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: ${{inputs.pypi-repository-url}}
 
       - name: Shame On Error
         if: (startsWith(env.BRANCH_NAME, 'release') || startsWith(env.BRANCH_NAME, 'develop') || startsWith(env.BRANCH_NAME, 'main')) && inputs.shame-on-error && failure()
