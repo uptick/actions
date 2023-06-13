@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "test"
+name = "uptick_actions_test"
 version = "0.1.0"
 description = "Test pyproject file to run poetry commands on"
 authors = ["william chu <william.chu@uptickhq.com>"]

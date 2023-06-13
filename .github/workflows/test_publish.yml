@@ -1,0 +1,22 @@
+name: Test Publish Package
+on:
+  release:
+    types: [published]
+
+permissions:
+  id-token: write # Required for federated aws oidc
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  publish-to-pypi:
+    uses: ./.github/workflows/ci.yaml
+    secrets: inherit
+    with:
+      command: poetry build
+      debug: true
+      poetry: true
+      pypi-publish: true
+      pypi-repository-url: https://test.pypi.org/legacy/
+      slack-channel: devops-test-slack
