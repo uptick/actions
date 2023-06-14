@@ -14,7 +14,7 @@ on:
     secrets:
       SLACK_TOKEN:
         description: "Slack API Token. Used to get the slack user for blaming AND to create a message in channel"
-        required: true
+        required: false
       SLACK_CHANNEL:
         description: "Slack channel to post error messages to"
         required: false
