@@ -317,6 +317,7 @@ jobs:
           file: Dockerfile
           cache-from: type=gha
           cache-to: type=gha, mode=max
+          provenance: false
           push: true
           # Default to just the git short hash. if docker-tag-latest ; also tag as the latest image
           tags: ${{inputs.docker-repository}}:${{inputs.docker-prefix && format('{0}-', inputs.docker-prefix) || ''}}${{env.GIT_SHORT_HASH}}${{inputs.docker-tag-latest && format(',{0}:latest',inputs.docker-repository)|| ''}}
