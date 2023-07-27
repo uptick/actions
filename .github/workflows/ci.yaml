@@ -155,6 +155,11 @@ on:
         description: "Required if specifying docker-enabled. This is the ECR repository. EG:  305686791668.dkr.ecr.ap-southeast-2.amazonaws.com/uptick"
         type: string
         default: ""
+      
+      docker-image-platforms:
+        description: "A comma separated list of platform to be used for building the docker image"
+        type: string
+        default: "linux/amd64"
 
       # AWS Settings
       aws:
@@ -318,6 +323,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha, mode=max
           provenance: false
+          platforms:  ${{inputs.docker-image-platforms}}
           push: true
           # Default to just the git short hash. if docker-tag-latest ; also tag as the latest image
           tags: ${{inputs.docker-repository}}:${{inputs.docker-prefix && format('{0}-', inputs.docker-prefix) || ''}}${{env.GIT_SHORT_HASH}}${{inputs.docker-tag-latest && format(',{0}:latest',inputs.docker-repository)|| ''}}
