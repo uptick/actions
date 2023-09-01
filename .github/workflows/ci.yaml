@@ -172,6 +172,12 @@ on:
         type: string
         default: "arn:aws:iam::305686791668:role/default-github-actions-ci-role"
 
+      # BUMP Settings
+      bump-app:
+        description: "App to bump"
+        type: string
+        default: ""
+
       debug:
         description: "Dump context"
         type: boolean
@@ -225,7 +231,7 @@ jobs:
 
       - name: Setup and Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
-        if: inputs.aws || inputs.docker-enabled
+        if: inputs.aws || inputs.docker-enabled || (inputs.bump-app != '')
         with:
           role-to-assume: ${{ inputs.aws-iam-role-arn }}
           role-session-name: ${{ env.AWS_SESSION_NAME}}
@@ -249,8 +255,7 @@ jobs:
         with:
           path: ~/.cache/pypoetry
           key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-poetry-
+          restore-keys: ${{ runner.os }}-poetry-
 
       - name: Poetry Install Dependencies
         if: inputs.poetry && inputs.poetry-install
@@ -328,13 +333,49 @@ jobs:
           # Default to just the git short hash. if docker-tag-latest ; also tag as the latest image
           tags: ${{inputs.docker-repository}}:${{inputs.docker-prefix && format('{0}-', inputs.docker-prefix) || ''}}${{env.GIT_SHORT_HASH}}${{inputs.docker-tag-latest && format(',{0}:latest',inputs.docker-repository)|| ''}}
 
-      - name: Publish Pypi Package
-        # This step expects a built package to be in the dist/ directory
-        if: inputs.pypi-publish
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: ${{inputs.pypi-repository-url}}
+      # TODO(DEV-442): William fix this
+      # - name: Publish Pypi Package
+      #   # This step expects a built package to be in the dist/ directory
+      #   if: inputs.pypi-publish
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #   with:
+      #     repository-url: ${{inputs.pypi-repository-url}}
 
+      - name: Bump Repository
+        id: bump_repository
+        if: inputs.bump-app != ''
+        run: |
+          python -c 'import botocore' || pip install boto3
+          python -c '
+          import subprocess
+
+          import boto3
+          import botocore
+          import requests
+
+          token = botocore.signers.generate_presigned_url(
+              boto3.client("sts"), "get_caller_identity", HttpMethod="GET"
+          )
+          jwt_token = requests.post(
+              "https://tickforge.onuptick.com/token", data={"username": token}
+          ).json()["access_token"]
+          headers = {"Authorization": f"Bearer {jwt_token}"}
+          default_user = subprocess.check_output(
+              "git log -n 1 --pretty=format:%an".split()
+          ).decode("utf-8")
+          default_email = subprocess.check_output(
+              "git log -n 1 --pretty=format:%ae".split()
+          ).decode("utf-8")
+          data = {"author_name": default_user, "author_email": default_email, "redeploy": False}
+          response = requests.post(
+              "https://tickforge.onuptick.com/api/workspaces/${{inputs.bump-app}}/bump",
+              json=data,
+              headers=headers,
+          )
+          print(response.json())
+          response.raise_for_status()
+          '
+      # TODO: William extract tese into a webhook instead on tickforge
       - name: Shame On Error
         if: (startsWith(env.BRANCH_NAME, 'release') || startsWith(env.BRANCH_NAME, 'develop') || startsWith(env.BRANCH_NAME, 'main')) && inputs.shame-on-error && failure()
         id: shame_on_error

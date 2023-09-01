@@ -1,0 +1,20 @@
+# name: Test Bump
+# on:
+#   pull_request: {}
+
+# permissions:
+#   id-token: write # Required for federated aws oidc
+#   contents: read
+#   actions: read
+#   pull-requests: write
+
+# jobs:
+#   test-bump:
+#     uses: ./.github/workflows/ci.yaml
+#     secrets: inherit
+#     with:
+#       command: poetry build
+#       debug: true
+#       poetry: true
+#       slack-channel: devops-test-slack
+#       bump-app: develop
