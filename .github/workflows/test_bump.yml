@@ -1,0 +1,32 @@
+name: Test Bump
+on:
+  push: {}
+  pull_request: {}
+
+permissions:
+  id-token: write # Required for federated aws oidc
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  test-bump:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Setup and Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: "arn:aws:iam::305686791668:role/default-github-actions-ci-role"
+          aws-region: ap-southeast-2
+
+      - name: lol
+        run: |
+          python -c 'import botocore' || pip install boto3
+          result=$(python <<EOF
+              import botocore
+              import boto3
+              token = botocore.signers.generate_presigned_url(boto3.client("sts"), "get_caller_identity", HttpMethod="GET"))'
+              jwt_token = requests.post('https://tickforge.onuptick.com/token', data={'username': token}).json()['access_token']
+
+              EOF
+          )
