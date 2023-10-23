@@ -161,11 +161,21 @@ on:
         type: string
         default: "linux/amd64"
 
+      ecr-type:
+        description: "The type of AWS ECR repository to push to public or private"
+        type: string
+        default: "private"
+
       # AWS Settings
       aws:
         description: "If enabled set up AWS Credentials"
         type: boolean
         default: false
+
+      aws-region:
+        description: "The AWS region to configure the AWS profile with"
+        type: string
+        default: "ap-southeast-2"
 
       aws-iam-role-arn:
         description: "AWS IAM Role to assume"
@@ -230,12 +240,12 @@ jobs:
           cat $GITHUB_ENV
 
       - name: Setup and Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         if: inputs.aws || inputs.docker-enabled || (inputs.bump-app != '')
         with:
           role-to-assume: ${{ inputs.aws-iam-role-arn }}
           role-session-name: ${{ env.AWS_SESSION_NAME}}
-          aws-region: ap-southeast-2
+          aws-region: ${{ inputs.aws-region }}
 
       ### PYTHON AND POETRY STUFF
       #
@@ -316,7 +326,9 @@ jobs:
       - name: Login to Amazon ECR Private
         if: inputs.docker-enabled
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: ${{ inputs.ecr-type }}
 
       - name: Build and push image
         id: docker_build_push
