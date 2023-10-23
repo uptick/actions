@@ -6,7 +6,6 @@ It should be easy to do the right thing and it should be easy to update
 all our pipelines across the organisation.
 
 - Installing a version of python
-- Notifing slack on an error
 - Logging into AWS using OICD
 - Building a docker image and pushing to ECR
 
@@ -21,7 +20,6 @@ Features:
 - Best practice selection of python version / node / poetry
 - Caching for Poetry/PNPM
 - Signing into AWS via OIDC
-- Slack Shaming / Praising
 
 **Usage:**
 
@@ -40,8 +38,6 @@ jobs:
       aws: true
       python: true
       poetry: true
-      slack-channel: workforce
-      shame-on-error: false
       command: make ci
 ```
 
