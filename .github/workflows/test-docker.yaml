@@ -1,4 +1,3 @@
-
 name: Test Docker
 on:
   pull_request: {}
@@ -19,7 +18,6 @@ jobs:
     with:
       command: echo good
       debug: true
-      slack-channel: devops-test-slack
       docker-enabled: true
       docker-prefix: main
       docker-tag-latest: true
@@ -31,6 +29,5 @@ jobs:
     with:
       command: echo good
       debug: true
-      slack-channel: devops-test-slack
       docker-enabled: true
       docker-repository: 305686791668.dkr.ecr.ap-southeast-2.amazonaws.com/github-actions-ci

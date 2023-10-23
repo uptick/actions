@@ -16,4 +16,3 @@ jobs:
       checkout-ref: "main"
       command: echo good
       debug: true
-      slack-channel: devops-test-slack
