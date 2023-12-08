@@ -50,9 +50,5 @@ External actions are security risks that can easily steal credentials or perform
 Please implement functionality via pythons / bash scripts and please rely only on built in libraries.
 
 # TODO
-
 - [ ] Add pre-commit hooks
 - [ ] Generate documentation from workflow inputs
-- [ ] CI: Build/push docker image to ECR
-- [ ] CI: Yarn
-- [ ] Instrumentation
