@@ -256,8 +256,8 @@ jobs:
           role-to-assume: ${{ inputs.aws-iam-role-arn }}
           role-session-name: ${{ env.AWS_SESSION_NAME}}
           aws-region: ${{ inputs.aws-region }}
-      ### Mise
 
+      ### Mise
       - uses: jdx/mise-action@v2
         if: inputs.mise
         with:

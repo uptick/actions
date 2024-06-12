@@ -9,7 +9,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  poetry-command:
+  mise-command:
     uses: ./.github/workflows/ci.yaml
     secrets: inherit
     with:
