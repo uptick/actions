@@ -135,11 +135,6 @@ on:
         description: "If enabled, build + push a docker image "
         type: boolean
         default: false
-      
-      docker-context:
-        description: "Where to find the Dockerfile"
-        type: string
-        default: "."
 
       docker-prefix:
         description: "Image tag to prefix. Eg: {subman}-aed1f13, where subman is the docker-prefix"
@@ -213,7 +208,12 @@ env:
 
 permissions:
   id-token: write # Required for federated aws oidc
-  contents: read # Required to checkout from a sub repo
+  actions: read
+  contents: write # to be able to publish a GitHub release
+  issues: write # to be able to comment on released issues
+  pull-requests: write # to be able to comment on released pull requests
+
+
   # actions: read # What for?
   # pull-requests: write # What for?
 
@@ -359,9 +359,9 @@ jobs:
       - name: Build and push image
         id: docker_build_push
         if: inputs.docker-enabled
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v4
         with:
-          context: "{{defaultContext}}:${{ inputs.docker-context }}"
+          context: .
           file: Dockerfile
           cache-from: type=gha
           cache-to: type=gha, mode=max
