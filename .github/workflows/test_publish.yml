@@ -1,21 +1,25 @@
-# name: Test Publish Package
-# on:
-#   push: {}
-#   pull_request: {}
+# This workflow will build a Python package and publish it to test.pypi.org
+# But currently its broken because pypi is poo poo
+# So I've disabled it.
+name: Test Publish Package
+on:
+  pull_request:
+    branches:
+      - feat/publish-*
 
-# permissions:
-#   id-token: write # Required for federated aws oidc
-#   contents: read
-#   actions: read
-#   pull-requests: write
+permissions:
+  id-token: write # Required for federated aws oidc
+  contents: read
+  actions: read
+  pull-requests: write
 
-# jobs:
-#   publish-to-pypi:
-#     uses: ./.github/workflows/ci.yaml
-#     secrets: inherit
-#     with:
-#       command: poetry build
-#       debug: true
-#       poetry: true
-#       pypi-publish: true
-#       pypi-repository-url: https://test.pypi.org/legacy/
+jobs:
+  publish-to-pypi:
+    uses: ./.github/workflows/ci.yaml
+    secrets: inherit
+    with:
+      command: poetry build
+      debug: true
+      poetry: true
+      pypi-publish: true
+      pypi-repository-url: https://test.pypi.org/legacy/

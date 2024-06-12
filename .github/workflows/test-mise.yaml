@@ -1,4 +1,4 @@
-name: Test Python
+name: Test Mise
 on:
   pull_request: {}
 
@@ -9,12 +9,10 @@ permissions:
   pull-requests: write
 
 jobs:
-  python-command:
+  mise-command:
     uses: ./.github/workflows/ci.yaml
     secrets: inherit
     with:
       command: echo good
-      debug: true
-      poetry: true
-      poetry-install: true
-      poetry-install-command: "poetry install --all-extras"
+      mise: true
+      mise-install: true
