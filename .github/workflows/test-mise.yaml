@@ -1,0 +1,18 @@
+name: Test Mise
+on:
+  pull_request: {}
+
+permissions:
+  id-token: write # Required for federated aws oidc
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  poetry-command:
+    uses: ./.github/workflows/ci.yaml
+    secrets: inherit
+    with:
+      command: echo good
+      mise: true
+      mise-install: true

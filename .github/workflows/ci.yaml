@@ -107,17 +107,17 @@ on:
       slack-on-error:
         description: "DEPRECATED"
         type: boolean
-        default: true
+        default: false
 
       shame-on-error:
         description: "DEPRECATED"
         type: boolean
-        default: true
+        default: false
 
       praise-on-fix:
         description: "DEPRECATED"
         type: boolean
-        default: true
+        default: false
 
       slack-channel:
         description: "DEPRECATED"
@@ -177,6 +177,21 @@ on:
         type: string
         default: "arn:aws:iam::305686791668:role/default-github-actions-ci-role"
 
+      # MISE Settings
+      mise:
+        description: "If enabled; installs mise"
+        type: boolean
+        default: false
+
+      mise-install:
+        description: "If enabled; runs mise install to install tools"
+        type: boolean
+        default: false
+
+      mise-cache:
+        description: "If enabled; caches mise via github's cache"
+        type: boolean
+        default: true
       # BUMP Settings
       bump-app:
         description: "App to bump"
@@ -241,6 +256,15 @@ jobs:
           role-to-assume: ${{ inputs.aws-iam-role-arn }}
           role-session-name: ${{ env.AWS_SESSION_NAME}}
           aws-region: ${{ inputs.aws-region }}
+      ### Mise
+
+      - uses: jdx/mise-action@v2
+        if: inputs.mise
+        with:
+          install: ${{ inputs.mise-install }} # [default: true] run `mise install`
+          cache: ${{ inputs.mise-cache }} # [default: true] cache mise using GitHub's cache
+          experimental: true
+
 
       ### PYTHON AND POETRY STUFF
       #
