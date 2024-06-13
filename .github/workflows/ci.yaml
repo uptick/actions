@@ -135,7 +135,12 @@ on:
         description: "If enabled, build + push a docker image "
         type: boolean
         default: false
-
+      
+      docker-context:
+        description: "Where to find the Dockerfile"
+        type: string
+        default: "."
+      
       docker-prefix:
         description: "Image tag to prefix. Eg: {subman}-aed1f13, where subman is the docker-prefix"
         type: string
@@ -359,9 +364,9 @@ jobs:
       - name: Build and push image
         id: docker_build_push
         if: inputs.docker-enabled
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
-          context: .
+          context: "{{defaultContext}}:${{ inputs.docker-context }}"
           file: Dockerfile
           cache-from: type=gha
           cache-to: type=gha, mode=max
