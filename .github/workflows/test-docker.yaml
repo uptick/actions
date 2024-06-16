@@ -7,9 +7,11 @@ on:
 
 permissions:
   id-token: write # Required for federated aws oidc
-  contents: read
   actions: read
-  pull-requests: write
+  contents: write # to be able to publish a GitHub release
+  issues: write # to be able to comment on released issues
+  pull-requests: write # to be able to comment on released pull requests
+
 
 jobs:
   docker-prefix-specified:
@@ -21,6 +23,7 @@ jobs:
       docker-enabled: true
       docker-prefix: main
       docker-tag-latest: true
+      docker-tag: testlol
       docker-repository: 305686791668.dkr.ecr.ap-southeast-2.amazonaws.com/github-actions-ci
 
   docker-no-prefix-specified:
