@@ -151,6 +151,11 @@ on:
         type: boolean
         default: false
 
+      docker-tag:
+        description: "Manual docker tag to include"
+        type: string
+        default: ''
+
       docker-repository:
         description: "Required if specifying docker-enabled. This is the ECR repository. EG:  305686791668.dkr.ecr.ap-southeast-2.amazonaws.com/uptick"
         type: string
@@ -374,7 +379,7 @@ jobs:
           platforms: ${{inputs.docker-image-platforms}}
           push: true
           # Default to just the git short hash. if docker-tag-latest ; also tag as the latest image
-          tags: ${{inputs.docker-repository}}:${{inputs.docker-prefix && format('{0}-', inputs.docker-prefix) || ''}}${{env.GIT_SHORT_HASH}}${{inputs.docker-tag-latest && format(',{0}:latest',inputs.docker-repository)|| ''}}
+          tags: ${{inputs.docker-repository}}:${{inputs.docker-prefix && format('{0}-', inputs.docker-prefix) || ''}}${{env.GIT_SHORT_HASH}}${{inputs.docker-tag-latest && format(',{0}:latest',inputs.docker-repository)|| ''}}${{inputs.docker-tag && format(',{0}:{1}',inputs.docker-repository, inputs.docker-tag)|| ''}}
 
       # TODO(DEV-442): William fix this
       # - name: Publish Pypi Package
