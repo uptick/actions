@@ -135,12 +135,12 @@ on:
         description: "If enabled, build + push a docker image "
         type: boolean
         default: false
-      
+
       docker-context:
         description: "Where to find the Dockerfile"
         type: string
         default: "."
-      
+
       docker-prefix:
         description: "Image tag to prefix. Eg: {subman}-aed1f13, where subman is the docker-prefix"
         type: string
@@ -231,195 +231,195 @@ jobs:
   ci:
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-        with:
-          # TODO: Configure fetch-depth?
-          fetch-depth: 2
-          ref: ${{ inputs.checkout-ref }}
-          ssh-key: ${{ secrets.checkout-ssh-key }}
+    - name: Checkout Code
+      uses: actions/checkout@v3
+      with:
+        # TODO: Configure fetch-depth?
+        fetch-depth: 2
+        ref: ${{ inputs.checkout-ref }}
+        ssh-key: ${{ secrets.checkout-ssh-key }}
 
-      - name: Dump GitHub context
-        if: inputs.debug
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: echo "$GITHUB_CONTEXT"
+    - name: Dump GitHub context
+      if: inputs.debug
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: echo "$GITHUB_CONTEXT"
 
-      - name: Set environment variables
-        shell: bash
-        run: |
-          if [[ ${{github.event_name}} == 'push' ]];
-          then
-            echo "GITHUB_EVENT=push" >> $GITHUB_ENV
-            echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} )" >> $GITHUB_ENV
-            echo "GIT_SHORT_HASH=${{github.sha}}" | cut -c -22  >> $GITHUB_ENV
-          else
-            echo "GITHUB_EVENT=pull_request" >> $GITHUB_ENV
-            echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} )" >> $GITHUB_ENV
-            export GIT_HEAD_SHA=${{github.event.pull_request.head.sha}}
-            export GIT_SHORT_HASH=$(echo $GIT_HEAD_SHA | cut -c -7)
-            echo "GIT_SHORT_HASH=$GIT_SHORT_HASH" >> $GITHUB_ENV
-          fi;
-          echo "GITHUB_REPOSITORY=${{github.repository}}" >> $GITHUB_ENV
-          echo "AWS_SESSION_NAME=${{github.repository}}" | sed 's/\//-/g' >> $GITHUB_ENV
-          cat $GITHUB_ENV
+    - name: Set environment variables
+      shell: bash
+      run: |
+        if [[ ${{github.event_name}} != 'pull_request' ]];
+        then
+          echo "GITHUB_EVENT=push" >> $GITHUB_ENV
+          echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} )" >> $GITHUB_ENV
+          echo "GIT_SHORT_HASH=${{github.sha}}" | cut -c -22  >> $GITHUB_ENV
+        else
+          echo "GITHUB_EVENT=pull_request" >> $GITHUB_ENV
+          echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} )" >> $GITHUB_ENV
+          export GIT_HEAD_SHA=${{github.event.pull_request.head.sha}}
+          export GIT_SHORT_HASH=$(echo $GIT_HEAD_SHA | cut -c -7)
+          echo "GIT_SHORT_HASH=$GIT_SHORT_HASH" >> $GITHUB_ENV
+        fi;
+        echo "GITHUB_REPOSITORY=${{github.repository}}" >> $GITHUB_ENV
+        echo "AWS_SESSION_NAME=${{github.repository}}" | sed 's/\//-/g' >> $GITHUB_ENV
+        cat $GITHUB_ENV
 
-      - name: Setup and Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        if: inputs.aws || inputs.docker-enabled || (inputs.bump-app != '')
-        with:
-          role-to-assume: ${{ inputs.aws-iam-role-arn }}
-          role-session-name: ${{ env.AWS_SESSION_NAME}}
-          aws-region: ${{ inputs.aws-region }}
+    - name: Setup and Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      if: inputs.aws || inputs.docker-enabled || (inputs.bump-app != '')
+      with:
+        role-to-assume: ${{ inputs.aws-iam-role-arn }}
+        role-session-name: ${{ env.AWS_SESSION_NAME}}
+        aws-region: ${{ inputs.aws-region }}
 
-      ### Mise
-      - uses: jdx/mise-action@v2
-        if: inputs.mise
-        with:
-          install: ${{ inputs.mise-install }} # [default: true] run `mise install`
-          cache: ${{ inputs.mise-cache }} # [default: true] cache mise using GitHub's cache
-          experimental: true
+    ### Mise
+    - uses: jdx/mise-action@v2
+      if: inputs.mise
+      with:
+        install: ${{ inputs.mise-install }} # [default: true] run `mise install`
+        cache: ${{ inputs.mise-cache }} # [default: true] cache mise using GitHub's cache
+        experimental: true
 
 
-      ### PYTHON AND POETRY STUFF
-      #
-      - name: Install Python
-        if: inputs.python
-        uses: actions/setup-python@v3
-        with:
-          python-version: ${{ inputs.python-version }}
+    ### PYTHON AND POETRY STUFF
+    #
+    - name: Install Python
+      if: inputs.python
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ inputs.python-version }}
 
-      - name: Setup and Configure Poetry
-        if: inputs.poetry
-        run: pip3 install poetry==${{ inputs.poetry-version }}
+    - name: Setup and Configure Poetry
+      if: inputs.poetry
+      run: pip3 install poetry==${{ inputs.poetry-version }}
 
-      - name: Cache Poetry Dependencies
-        uses: actions/cache@v3
-        if: inputs.poetry
-        with:
-          path: ~/.cache/pypoetry
-          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: ${{ runner.os }}-poetry-
+    - name: Cache Poetry Dependencies
+      uses: actions/cache@v3
+      if: inputs.poetry
+      with:
+        path: ~/.cache/pypoetry
+        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+        restore-keys: ${{ runner.os }}-poetry-
 
-      - name: Poetry Install Dependencies
-        if: inputs.poetry && inputs.poetry-install
-        run: |
-          ${{ inputs.poetry-install-command }}
+    - name: Poetry Install Dependencies
+      if: inputs.poetry && inputs.poetry-install
+      run: |
+        ${{ inputs.poetry-install-command }}
 
-      ##### NODE AND PNPM STUFF
-      #
-      - name: Install Node
-        if: inputs.node
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ inputs.node-version }}
+    ##### NODE AND PNPM STUFF
+    #
+    - name: Install Node
+      if: inputs.node
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node-version }}
 
-      - name: Install PNPM
-        if: inputs.pnpm
-        uses: pnpm/action-setup@v2.2.4
-        with:
-          version: next-7
+    - name: Install PNPM
+      if: inputs.pnpm
+      uses: pnpm/action-setup@v2.2.4
+      with:
+        version: next-7
 
-      - name: Get PNPM Cache Directory
-        if: inputs.pnpm
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "pnpm_cache_dir=$(pnpm store path)" >> $GITHUB_OUTPUT
+    - name: Get PNPM Cache Directory
+      if: inputs.pnpm
+      id: pnpm-cache
+      shell: bash
+      run: |
+        echo "pnpm_cache_dir=$(pnpm store path)" >> $GITHUB_OUTPUT
 
-      - name: Setup PNPM Cache
-        uses: actions/cache@v3
-        if: inputs.pnpm
-        with:
-          path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+    - name: Setup PNPM Cache
+      uses: actions/cache@v3
+      if: inputs.pnpm
+      with:
+        path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
 
-      - name: Install PNPM Dependencies
-        if: inputs.pnpm && inputs.pnpm-install
-        shell: bash
-        run: |
-          pnpm install
+    - name: Install PNPM Dependencies
+      if: inputs.pnpm && inputs.pnpm-install
+      shell: bash
+      run: |
+        pnpm install
 
-      - name: PNPM Build
-        if: inputs.pnpm && inputs.pnpm-build
-        shell: bash
-        run: |
-          pnpm build
+    - name: PNPM Build
+      if: inputs.pnpm && inputs.pnpm-build
+      shell: bash
+      run: |
+        pnpm build
 
-      - name: Run CI Command
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ${{ inputs.command }}
+    - name: Run CI Command
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        ${{ inputs.command }}
 
-      - name: Set up Docker Buildx
-        if: inputs.docker-enabled
-        uses: docker/setup-buildx-action@v2
+    - name: Set up Docker Buildx
+      if: inputs.docker-enabled
+      uses: docker/setup-buildx-action@v2
 
-      - name: Login to Amazon ECR Private
-        if: inputs.docker-enabled
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-        with:
-          registry-type: ${{ inputs.ecr-type }}
+    - name: Login to Amazon ECR Private
+      if: inputs.docker-enabled
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+      with:
+        registry-type: ${{ inputs.ecr-type }}
 
-      - name: Build and push image
-        id: docker_build_push
-        if: inputs.docker-enabled
-        uses: docker/build-push-action@v5
-        with:
-          context: "{{defaultContext}}:${{ inputs.docker-context }}"
-          file: Dockerfile
-          cache-from: type=gha
-          cache-to: type=gha, mode=max
-          provenance: false
-          platforms: ${{inputs.docker-image-platforms}}
-          push: true
-          # Default to just the git short hash. if docker-tag-latest ; also tag as the latest image
-          tags: ${{inputs.docker-repository}}:${{inputs.docker-prefix && format('{0}-', inputs.docker-prefix) || ''}}${{env.GIT_SHORT_HASH}}${{inputs.docker-tag-latest && format(',{0}:latest',inputs.docker-repository)|| ''}}${{inputs.docker-tag && format(',{0}:{1}',inputs.docker-repository, inputs.docker-tag)|| ''}}
+    - name: Build and push image
+      id: docker_build_push
+      if: inputs.docker-enabled
+      uses: docker/build-push-action@v5
+      with:
+        context: "{{defaultContext}}:${{ inputs.docker-context }}"
+        file: Dockerfile
+        cache-from: type=gha
+        cache-to: type=gha, mode=max
+        provenance: false
+        platforms: ${{inputs.docker-image-platforms}}
+        push: true
+        # Default to just the git short hash. if docker-tag-latest ; also tag as the latest image
+        tags: ${{inputs.docker-repository}}:${{inputs.docker-prefix && format('{0}-', inputs.docker-prefix) || ''}}${{env.GIT_SHORT_HASH}}${{inputs.docker-tag-latest && format(',{0}:latest',inputs.docker-repository)|| ''}}${{inputs.docker-tag && format(',{0}:{1}',inputs.docker-repository, inputs.docker-tag)|| ''}}
 
-      # TODO(DEV-442): William fix this
-      # - name: Publish Pypi Package
-      #   # This step expects a built package to be in the dist/ directory
-      #   if: inputs.pypi-publish
-      #   uses: pypa/gh-action-pypi-publish@release/v1
-      #   with:
-      #     repository-url: ${{inputs.pypi-repository-url}}
+    # TODO(DEV-442): William fix this
+    # - name: Publish Pypi Package
+    #   # This step expects a built package to be in the dist/ directory
+    #   if: inputs.pypi-publish
+    #   uses: pypa/gh-action-pypi-publish@release/v1
+    #   with:
+    #     repository-url: ${{inputs.pypi-repository-url}}
 
-      - name: Bump Repository
-        id: bump_repository
-        if: inputs.bump-app != ''
-        run: |
-          python -c 'import botocore' || pip install boto3
-          python -c '
-          import subprocess
+    - name: Bump Repository
+      id: bump_repository
+      if: inputs.bump-app != ''
+      run: |
+        python -c 'import botocore' || pip install boto3
+        python -c '
+        import subprocess
 
-          import boto3
-          import botocore
-          import requests
+        import boto3
+        import botocore
+        import requests
 
-          token = botocore.signers.generate_presigned_url(
-              boto3.client("sts"), "get_caller_identity", HttpMethod="GET"
-          )
-          jwt_token = requests.post(
-              "https://tickforge.onuptick.com/token", data={"username": token}
-          ).json()["access_token"]
-          headers = {"Authorization": f"Bearer {jwt_token}"}
-          default_user = subprocess.check_output(
-              "git log -n 1 --pretty=format:%an".split()
-          ).decode("utf-8")
-          default_email = subprocess.check_output(
-              "git log -n 1 --pretty=format:%ae".split()
-          ).decode("utf-8")
-          data = {"author_name": default_user, "author_email": default_email, "redeploy": False}
-          response = requests.post(
-              "https://tickforge.onuptick.com/api/workspaces/${{inputs.bump-app}}/bump",
-              json=data,
-              headers=headers,
-          )
-          print(response.json())
-          response.raise_for_status()
-          '
+        token = botocore.signers.generate_presigned_url(
+            boto3.client("sts"), "get_caller_identity", HttpMethod="GET"
+        )
+        jwt_token = requests.post(
+            "https://tickforge.onuptick.com/token", data={"username": token}
+        ).json()["access_token"]
+        headers = {"Authorization": f"Bearer {jwt_token}"}
+        default_user = subprocess.check_output(
+            "git log -n 1 --pretty=format:%an".split()
+        ).decode("utf-8")
+        default_email = subprocess.check_output(
+            "git log -n 1 --pretty=format:%ae".split()
+        ).decode("utf-8")
+        data = {"author_name": default_user, "author_email": default_email, "redeploy": False}
+        response = requests.post(
+            "https://tickforge.onuptick.com/api/workspaces/${{inputs.bump-app}}/bump",
+            json=data,
+            headers=headers,
+        )
+        print(response.json())
+        response.raise_for_status()
+        '
