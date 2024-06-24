@@ -369,7 +369,7 @@ jobs:
     - name: Build and push image
       id: docker_build_push
       if: inputs.docker-enabled
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         context: "{{defaultContext}}:${{ inputs.docker-context }}"
         file: Dockerfile
