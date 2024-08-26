@@ -393,7 +393,7 @@ jobs:
       id: bump_repository
       if: inputs.bump-app != ''
       run: |
-        python -c 'import botocore' || pip install boto3
+        python -c 'import botocore' || pip install boto3 requests
         python -c '
         import subprocess
 
