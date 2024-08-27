@@ -381,12 +381,14 @@ jobs:
         # Default to just the git short hash. if docker-tag-latest ; also tag as the latest image
         tags: ${{inputs.docker-repository}}:${{inputs.docker-prefix && format('{0}-', inputs.docker-prefix) || ''}}${{env.GIT_SHORT_HASH}}${{inputs.docker-tag-latest && format(',{0}:latest',inputs.docker-repository)|| ''}}${{inputs.docker-tag && format(',{0}:{1}',inputs.docker-repository, inputs.docker-tag)|| ''}}
 
-    - name: Publish Pypi Package
-      # This step expects a built package to be in the dist/ directory
-      if: inputs.pypi-publish && github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        repository-url: ${{inputs.pypi-repository-url}}
+    # - name: Publish Pypi Package
+    #   Disabling publishing because pypi are stupid idiots who force you to download a stupid 30s docker files
+    #   just to publish  package. What idiots.
+    #   # This step expects a built package to be in the dist/ directory
+    #   if: inputs.pypi-publish && github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+    #   uses: pypa/gh-action-pypi-publish@release/v1
+    #   with:
+    #     repository-url: ${{inputs.pypi-repository-url}}
 
     - name: Bump Repository
       id: bump_repository
