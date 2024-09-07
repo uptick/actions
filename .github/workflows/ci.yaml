@@ -130,9 +130,15 @@ on:
         type: string
         default: "make ci"
 
-      # Docker Settings
+      # docker settings
       docker-enabled:
-        description: "If enabled, build + push a docker image "
+        description: "if enabled, build + push a docker image "
+        type: boolean
+        default: false
+
+      # docker settings
+      docker-buildx-enabled:
+        description: "if enabled, enables docker buildx"
         type: boolean
         default: false
 
@@ -356,7 +362,7 @@ jobs:
         ${{ inputs.command }}
 
     - name: Set up Docker Buildx
-      if: inputs.docker-enabled
+      if: inputs.docker-enabled || inputs.docker-buildx-enabled
       uses: docker/setup-buildx-action@v2
 
     - name: Login to Amazon ECR Private
