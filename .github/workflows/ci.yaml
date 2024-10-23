@@ -17,6 +17,9 @@ on:
       checkout-ssh-key:
         description: "The ssh key if provided; to checkout the repo with"
         required: false
+      SECRET_ENV:
+        description: "A secret environment variable to faciliate passing in secrets"
+        required: false
 
     inputs:
       checkout-ref:
@@ -361,6 +364,7 @@ jobs:
       shell: bash
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SECRET_ENV: ${{ secrets.SECRET_ENV }}
       run: |
         ${{ inputs.command }}
 
