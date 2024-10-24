@@ -386,7 +386,7 @@ jobs:
       if: inputs.docker-enabled
       uses: docker/build-push-action@v6
       with:
-        context: "{{defaultContext}}:${{ inputs.docker-context }}"
+        context: "${{ inputs.docker-context }}"
         file: Dockerfile
         cache-from: type=gha
         cache-to: type=gha, mode=max
