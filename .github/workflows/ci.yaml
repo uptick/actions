@@ -68,16 +68,42 @@ on:
         type: string
         default: "1.8.2"
 
-      pypi-publish:
-        description: "Publish to pypi?"
-        type: boolean
-        default: false
-
       pypi-repository-url:
         description: "If pypi-publish and pypi-repository-url is set, publish to this pypi repository. Requires id-token: write. For testing use https://test.pypi.org/legacy/"
         type: string
         required: false
         default: "https://upload.pypi.org/legacy/"
+
+      # uv settings
+      uv:
+        description: "Install and set up uv"
+        type: boolean
+        default: false
+
+      uv-cache:
+        description: "Cache uv via github's cache"
+        type: boolean
+        default: true
+
+      uv-sync:
+        description: "Sync uv dependencies"
+        type: boolean
+        default: true
+
+      uv-sync-command:
+        description: "Sync command. Defaults to uv sync. Add --all-extras or whatever here."
+        type: string
+        default: "uv sync"
+
+      uv-version:
+        description: "Version of uv to install"
+        type: string
+        default: "0.5.0"
+
+      uv-directory:
+        description: "Path to run uv within"
+        type: string
+        default: "."
 
       # Node Settings
       node:
@@ -174,7 +200,7 @@ on:
         description: "A comma separated list of platform to be used for building the docker image"
         type: string
         default: "linux/amd64"
-      
+
       docker-push:
         description: "Whether or not to push docker images"
         type: boolean
@@ -323,6 +349,20 @@ jobs:
       run: |
         ${{ inputs.poetry-install-command }}
 
+    ### uv stuff
+    #
+    - name: Install uv
+      if: inputs.uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: ${{ inputs.uv-version }}
+        enable-cache: ${{ inputs.uv-cache }}
+
+    - name: Run uv sync
+      if: inputs.uv && inputs.uv-sync
+      working-directory: ${{ inputs.uv-directory }}
+      run: ${{ inputs.uv-sync-command }}
+
     ##### NODE AND PNPM STUFF
     #
     - name: Install Node
@@ -413,13 +453,13 @@ jobs:
           ${{ inputs.docker-repository != env.ALTERNATE_DOCKER_REPOSITORY && format('{0}:{1}{2}{3}{4}', env.ALTERNATE_DOCKER_REPOSITORY, inputs.docker-prefix && format('{0}-', inputs.docker-prefix) || '', env.GIT_SHORT_HASH, inputs.docker-tag-latest && format(',{0}:latest',env.ALTERNATE_DOCKER_REPOSITORY)|| '', inputs.docker-tag && format(',{0}:{1}',env.ALTERNATE_DOCKER_REPOSITORY, inputs.docker-tag) || '') || '' }}
 
     # - name: Publish Pypi Package
-    #   Disabling publishing because pypi are stupid idiots who force you to download a stupid 30s docker files
-    #   just to publish  package. What idiots.
     #   # This step expects a built package to be in the dist/ directory
     #   if: inputs.pypi-publish && github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-    #   uses: pypa/gh-action-pypi-publish@release/v1
-    #   with:
-    #     repository-url: ${{inputs.pypi-repository-url}}
+    #   env:
+    #     UV_PUBLISH_URL: ${{inputs.pypi-repository-url}}
+    #   run: |
+    #     uv build
+    #     uv publish
 
     - name: Bump Repository
       id: bump_repository

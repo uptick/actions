@@ -1,0 +1,25 @@
+name: Test uv installation
+on:
+  pull_request: {}
+  push:
+    branches:
+      - main
+
+
+permissions:
+  id-token: write # Required for federated aws oidc
+  actions: read
+  contents: write # to be able to publish a GitHub release
+  issues: write # to be able to comment on released issues
+  pull-requests: write # to be able to comment on released pull requests
+
+jobs:
+  test-install-uv:
+    uses: ./.github/workflows/ci.yaml
+    secrets: inherit
+    with:
+      debug: true
+      uv: true
+      uv-directory: fake_uv
+      uv-version: 0.5.0
+      command: cd fake_uv/ && uv run ruff -h || true
