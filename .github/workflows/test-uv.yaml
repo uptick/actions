@@ -14,7 +14,7 @@ permissions:
   pull-requests: write # to be able to comment on released pull requests
 
 jobs:
-  publish-to-pypi:
+  test-install-uv:
     uses: ./.github/workflows/ci.yaml
     secrets: inherit
     with:
