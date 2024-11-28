@@ -189,7 +189,7 @@ on:
       docker-tag:
         description: "Manual docker tag to include"
         type: string
-        default: ''
+        default: ""
 
       docker-repository:
         description: "Required if specifying docker-enabled. This is the ECR repository. EG:  305686791668.dkr.ecr.ap-southeast-2.amazonaws.com/uptick"
@@ -205,6 +205,12 @@ on:
         description: "Whether or not to push docker images"
         type: boolean
         default: true
+
+      docker-build-args:
+        description: "Docker Build arguments as JSON array of key value pairs"
+        required: false
+        type: string
+        default: '[{"ARG1":"value1"},{"ARG2":"value2"}]'
 
       ecr-type:
         description: "The type of AWS ECR repository to push to public or private"
@@ -264,234 +270,235 @@ permissions:
   issues: write # to be able to comment on released issues
   pull-requests: write # to be able to comment on released pull requests
 
-
   # actions: read # What for?
   # pull-requests: write # What for?
 
 jobs:
   ci:
+    strategy:
+      matrix: ${{ fromJson(inputs.docker-build-args) }}
     runs-on: ubuntu-22.04
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
-      with:
-        # TODO: Configure fetch-depth?
-        fetch-depth: 2
-        ref: ${{ inputs.checkout-ref }}
-        ssh-key: ${{ secrets.checkout-ssh-key }}
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          # TODO: Configure fetch-depth?
+          fetch-depth: 2
+          ref: ${{ inputs.checkout-ref }}
+          ssh-key: ${{ secrets.checkout-ssh-key }}
 
-    - name: Dump GitHub context
-      if: inputs.debug
-      env:
-        GITHUB_CONTEXT: ${{ toJson(github) }}
-      run: echo "$GITHUB_CONTEXT"
+      - name: Dump GitHub context
+        if: inputs.debug
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
 
-    - name: Set environment variables
-      shell: bash
-      run: |
-        if [[ ${{github.event_name}} != 'pull_request' ]];
-        then
-          echo "GITHUB_EVENT=push" >> $GITHUB_ENV
-          echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} )" >> $GITHUB_ENV
-          echo "GIT_SHORT_HASH=${{github.sha}}" | cut -c -22  >> $GITHUB_ENV
-        else
-          echo "GITHUB_EVENT=pull_request" >> $GITHUB_ENV
-          echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} )" >> $GITHUB_ENV
-          export GIT_HEAD_SHA=${{github.event.pull_request.head.sha}}
-          export GIT_SHORT_HASH=$(echo $GIT_HEAD_SHA | cut -c -7)
-          echo "GIT_SHORT_HASH=$GIT_SHORT_HASH" >> $GITHUB_ENV
-        fi;
-        echo "GITHUB_REPOSITORY=${{github.repository}}" >> $GITHUB_ENV
-        echo "AWS_SESSION_NAME=${{github.repository}}" | sed 's/\//-/g' >> $GITHUB_ENV
-        echo "ALTERNATE_DOCKER_REPOSITORY=${{ inputs.docker-repository }}" | sed "s/^ALTERNATE_DOCKER_REPOSITORY=\([0-9]\{12\}\)/ALTERNATE_DOCKER_REPOSITORY=${{env.DEPLOYMENTS_ACCOUNT_ID}}/g" >> $GITHUB_ENV
-        echo "MAIN_ACCOUNT_ID=${{ inputs.docker-repository }}" | sed -n "s/^MAIN_ACCOUNT_ID=\([0-9]\{12\}\).*/MAIN_ACCOUNT_ID=\1/p" >> $GITHUB_ENV
-        cat $GITHUB_ENV
+      - name: Set environment variables
+        shell: bash
+        run: |
+          if [[ ${{github.event_name}} != 'pull_request' ]];
+          then
+            echo "GITHUB_EVENT=push" >> $GITHUB_ENV
+            echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} )" >> $GITHUB_ENV
+            echo "GIT_SHORT_HASH=${{github.sha}}" | cut -c -22  >> $GITHUB_ENV
+          else
+            echo "GITHUB_EVENT=pull_request" >> $GITHUB_ENV
+            echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} )" >> $GITHUB_ENV
+            export GIT_HEAD_SHA=${{github.event.pull_request.head.sha}}
+            export GIT_SHORT_HASH=$(echo $GIT_HEAD_SHA | cut -c -7)
+            echo "GIT_SHORT_HASH=$GIT_SHORT_HASH" >> $GITHUB_ENV
+          fi;
+          echo "GITHUB_REPOSITORY=${{github.repository}}" >> $GITHUB_ENV
+          echo "AWS_SESSION_NAME=${{github.repository}}" | sed 's/\//-/g' >> $GITHUB_ENV
+          echo "ALTERNATE_DOCKER_REPOSITORY=${{ inputs.docker-repository }}" | sed "s/^ALTERNATE_DOCKER_REPOSITORY=\([0-9]\{12\}\)/ALTERNATE_DOCKER_REPOSITORY=${{env.DEPLOYMENTS_ACCOUNT_ID}}/g" >> $GITHUB_ENV
+          echo "MAIN_ACCOUNT_ID=${{ inputs.docker-repository }}" | sed -n "s/^MAIN_ACCOUNT_ID=\([0-9]\{12\}\).*/MAIN_ACCOUNT_ID=\1/p" >> $GITHUB_ENV
+          cat $GITHUB_ENV
 
-    - name: Setup and Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      if: inputs.aws || inputs.docker-enabled || (inputs.bump-app != '')
-      with:
-        role-to-assume: ${{ inputs.aws-iam-role-arn }}
-        role-session-name: ${{ env.AWS_SESSION_NAME}}
-        aws-region: ${{ inputs.aws-region }}
+      - name: Setup and Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        if: inputs.aws || inputs.docker-enabled || (inputs.bump-app != '')
+        with:
+          role-to-assume: ${{ inputs.aws-iam-role-arn }}
+          role-session-name: ${{ env.AWS_SESSION_NAME}}
+          aws-region: ${{ inputs.aws-region }}
 
-    ### Mise
-    - uses: jdx/mise-action@v2
-      if: inputs.mise
-      with:
-        install: ${{ inputs.mise-install }} # [default: true] run `mise install`
-        cache: ${{ inputs.mise-cache }} # [default: true] cache mise using GitHub's cache
-        experimental: true
+      ### Mise
+      - uses: jdx/mise-action@v2
+        if: inputs.mise
+        with:
+          install: ${{ inputs.mise-install }} # [default: true] run `mise install`
+          cache: ${{ inputs.mise-cache }} # [default: true] cache mise using GitHub's cache
+          experimental: true
 
+      ### PYTHON AND POETRY STUFF
+      #
+      - name: Install Python
+        if: inputs.python
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ inputs.python-version }}
 
-    ### PYTHON AND POETRY STUFF
-    #
-    - name: Install Python
-      if: inputs.python
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ inputs.python-version }}
+      - name: Setup and Configure Poetry
+        if: inputs.poetry
+        run: pip3 install poetry==${{ inputs.poetry-version }}
 
-    - name: Setup and Configure Poetry
-      if: inputs.poetry
-      run: pip3 install poetry==${{ inputs.poetry-version }}
+      - name: Cache Poetry Dependencies
+        uses: actions/cache@v3
+        if: inputs.poetry
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: ${{ runner.os }}-poetry-
 
-    - name: Cache Poetry Dependencies
-      uses: actions/cache@v3
-      if: inputs.poetry
-      with:
-        path: ~/.cache/pypoetry
-        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
-        restore-keys: ${{ runner.os }}-poetry-
+      - name: Poetry Install Dependencies
+        if: inputs.poetry && inputs.poetry-install
+        run: |
+          ${{ inputs.poetry-install-command }}
 
-    - name: Poetry Install Dependencies
-      if: inputs.poetry && inputs.poetry-install
-      run: |
-        ${{ inputs.poetry-install-command }}
+      ### uv stuff
+      #
+      - name: Install uv
+        if: inputs.uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: ${{ inputs.uv-version }}
+          enable-cache: ${{ inputs.uv-cache }}
 
-    ### uv stuff
-    #
-    - name: Install uv
-      if: inputs.uv
-      uses: astral-sh/setup-uv@v3
-      with:
-        version: ${{ inputs.uv-version }}
-        enable-cache: ${{ inputs.uv-cache }}
+      - name: Run uv sync
+        if: inputs.uv && inputs.uv-sync
+        working-directory: ${{ inputs.uv-directory }}
+        run: ${{ inputs.uv-sync-command }}
 
-    - name: Run uv sync
-      if: inputs.uv && inputs.uv-sync
-      working-directory: ${{ inputs.uv-directory }}
-      run: ${{ inputs.uv-sync-command }}
+      ##### NODE AND PNPM STUFF
+      #
+      - name: Install Node
+        if: inputs.node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ inputs.node-version }}
 
-    ##### NODE AND PNPM STUFF
-    #
-    - name: Install Node
-      if: inputs.node
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ inputs.node-version }}
+      - name: Install PNPM
+        if: inputs.pnpm
+        uses: pnpm/action-setup@v2.2.4
+        with:
+          version: next-7
 
-    - name: Install PNPM
-      if: inputs.pnpm
-      uses: pnpm/action-setup@v2.2.4
-      with:
-        version: next-7
+      - name: Get PNPM Cache Directory
+        if: inputs.pnpm
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "pnpm_cache_dir=$(pnpm store path)" >> $GITHUB_OUTPUT
 
-    - name: Get PNPM Cache Directory
-      if: inputs.pnpm
-      id: pnpm-cache
-      shell: bash
-      run: |
-        echo "pnpm_cache_dir=$(pnpm store path)" >> $GITHUB_OUTPUT
+      - name: Setup PNPM Cache
+        uses: actions/cache@v3
+        if: inputs.pnpm
+        with:
+          path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
-    - name: Setup PNPM Cache
-      uses: actions/cache@v3
-      if: inputs.pnpm
-      with:
-        path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
-        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-pnpm-store-
+      - name: Install PNPM Dependencies
+        if: inputs.pnpm && inputs.pnpm-install
+        shell: bash
+        run: |
+          pnpm install
 
-    - name: Install PNPM Dependencies
-      if: inputs.pnpm && inputs.pnpm-install
-      shell: bash
-      run: |
-        pnpm install
+      - name: PNPM Build
+        if: inputs.pnpm && inputs.pnpm-build
+        shell: bash
+        run: |
+          pnpm build
 
-    - name: PNPM Build
-      if: inputs.pnpm && inputs.pnpm-build
-      shell: bash
-      run: |
-        pnpm build
+      - name: Run CI Command
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SECRET_ENV: ${{ secrets.SECRET_ENV }}
+        run: |
+          ${{ inputs.command }}
 
-    - name: Run CI Command
-      shell: bash
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SECRET_ENV: ${{ secrets.SECRET_ENV }}
-      run: |
-        ${{ inputs.command }}
+      - name: Set up Docker Buildx
+        if: inputs.docker-enabled || inputs.docker-buildx-enabled
+        uses: docker/setup-buildx-action@v2
+      # Login to multiple repos if not pushing to only the deployments account
+      - name: Login to Amazon ECR Private
+        if: inputs.docker-enabled
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: ${{ inputs.ecr-type }}
+          registries: "${{ env.MAIN_ACCOUNT_ID == env.DEPLOYMENTS_ACCOUNT_ID && env.MAIN_ACCOUNT_ID || format('{0},{1}', env.MAIN_ACCOUNT_ID, env.DEPLOYMENTS_ACCOUNT_ID) }}"
+      # Build and push to the main repo plus an additional repo in deployments account
+      # Should be removed after ECR migration is complete
+      - name: Build and push image
+        id: docker_build_push
+        if: inputs.docker-enabled
+        uses: docker/build-push-action@v6
+        with:
+          context: "${{ inputs.docker-context }}"
+          file: Dockerfile
+          cache-from: type=gha
+          cache-to: type=gha, mode=max
+          provenance: false
+          platforms: ${{inputs.docker-image-platforms}}
+          build-args: ${{ matrix }}
+          push: ${{inputs.docker-push}}
+          # TODO: refactor the giant tags line into a script
+          # Default to just the git short hash. if docker-tag-latest ; also tag as the latest image
+          # Uses the format function and various conditions to determine the tags
+          # Based on the condition for each place holder 1,2,3,4 the place holder either has a value or ''
+          # 1st condition: inputs.docker-prefix is specified => inputs.docker-prefix && format('{0}-', inputs.docker-prefix) => <inputs.docker-repository>:<inputs.docker-prefix>-<env.GIT_SHORT_HASH>
+          # 2nd condition: env.GIT_SHORT_HASH exists and is not null => always true => <inputs.docker-repository>:<env.GIT_SHORT_HASH>
+          # 3rd condition: inputs.docker-tag-latest is specified inputs.docker-tag-latest && format(',{0}:latest', inputs.docker-repository) => <inputs.docker-repository>:<env.GIT_SHORT_HASH>,<inputs.docker-repository>:latest
+          # 4th condition: inputs.docker-tag is specified => inputs.docker-tag && format(',{0}:{1}', inputs.docker-repository, inputs.docker-tag) => <inputs.docker-repository>:<env.GIT_SHORT_HASH>,<inputs.docker-repository>:<inputs.docker-tag>
+          # When multiple condition are true and since they have ',' in the format they will be strung together as such (except for the first two conditions they will be strung together in one tag):
+          # <inputs.docker-repository>:<inputs.docker-prefix>-<env.GIT_SHORT_HASH>,<inputs.docker-repository>:latest,<inputs.docker-repository>:<inputs.docker-tag>
+          tags: |
+            ${{ format('{0}:{1}{2}{3}{4}', inputs.docker-repository, inputs.docker-prefix && format('{0}-', inputs.docker-prefix) || '', env.GIT_SHORT_HASH, inputs.docker-tag-latest && format(',{0}:latest', inputs.docker-repository) || '', inputs.docker-tag && format(',{0}:{1}', inputs.docker-repository, inputs.docker-tag) || '') }}
+            ${{ inputs.docker-repository != env.ALTERNATE_DOCKER_REPOSITORY && format('{0}:{1}{2}{3}{4}', env.ALTERNATE_DOCKER_REPOSITORY, inputs.docker-prefix && format('{0}-', inputs.docker-prefix) || '', env.GIT_SHORT_HASH, inputs.docker-tag-latest && format(',{0}:latest',env.ALTERNATE_DOCKER_REPOSITORY)|| '', inputs.docker-tag && format(',{0}:{1}',env.ALTERNATE_DOCKER_REPOSITORY, inputs.docker-tag) || '') || '' }}
 
-    - name: Set up Docker Buildx
-      if: inputs.docker-enabled || inputs.docker-buildx-enabled
-      uses: docker/setup-buildx-action@v2
-    # Login to multiple repos if not pushing to only the deployments account
-    - name: Login to Amazon ECR Private
-      if: inputs.docker-enabled
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
-      with:
-        registry-type: ${{ inputs.ecr-type }}
-        registries: "${{ env.MAIN_ACCOUNT_ID == env.DEPLOYMENTS_ACCOUNT_ID && env.MAIN_ACCOUNT_ID || format('{0},{1}', env.MAIN_ACCOUNT_ID, env.DEPLOYMENTS_ACCOUNT_ID) }}"
-    # Build and push to the main repo plus an additional repo in deployments account
-    # Should be removed after ECR migration is complete
-    - name: Build and push image
-      id: docker_build_push
-      if: inputs.docker-enabled
-      uses: docker/build-push-action@v6
-      with:
-        context: "${{ inputs.docker-context }}"
-        file: Dockerfile
-        cache-from: type=gha
-        cache-to: type=gha, mode=max
-        provenance: false
-        platforms: ${{inputs.docker-image-platforms}}
-        push: ${{inputs.docker-push}}
-        # TODO: refactor the giant tags line into a script
-        # Default to just the git short hash. if docker-tag-latest ; also tag as the latest image
-        # Uses the format function and various conditions to determine the tags
-        # Based on the condition for each place holder 1,2,3,4 the place holder either has a value or ''
-        # 1st condition: inputs.docker-prefix is specified => inputs.docker-prefix && format('{0}-', inputs.docker-prefix) => <inputs.docker-repository>:<inputs.docker-prefix>-<env.GIT_SHORT_HASH>
-        # 2nd condition: env.GIT_SHORT_HASH exists and is not null => always true => <inputs.docker-repository>:<env.GIT_SHORT_HASH>
-        # 3rd condition: inputs.docker-tag-latest is specified inputs.docker-tag-latest && format(',{0}:latest', inputs.docker-repository) => <inputs.docker-repository>:<env.GIT_SHORT_HASH>,<inputs.docker-repository>:latest
-        # 4th condition: inputs.docker-tag is specified => inputs.docker-tag && format(',{0}:{1}', inputs.docker-repository, inputs.docker-tag) => <inputs.docker-repository>:<env.GIT_SHORT_HASH>,<inputs.docker-repository>:<inputs.docker-tag>
-        # When multiple condition are true and since they have ',' in the format they will be strung together as such (except for the first two conditions they will be strung together in one tag):
-        # <inputs.docker-repository>:<inputs.docker-prefix>-<env.GIT_SHORT_HASH>,<inputs.docker-repository>:latest,<inputs.docker-repository>:<inputs.docker-tag>
-        tags: |
-          ${{ format('{0}:{1}{2}{3}{4}', inputs.docker-repository, inputs.docker-prefix && format('{0}-', inputs.docker-prefix) || '', env.GIT_SHORT_HASH, inputs.docker-tag-latest && format(',{0}:latest', inputs.docker-repository) || '', inputs.docker-tag && format(',{0}:{1}', inputs.docker-repository, inputs.docker-tag) || '') }}
-          ${{ inputs.docker-repository != env.ALTERNATE_DOCKER_REPOSITORY && format('{0}:{1}{2}{3}{4}', env.ALTERNATE_DOCKER_REPOSITORY, inputs.docker-prefix && format('{0}-', inputs.docker-prefix) || '', env.GIT_SHORT_HASH, inputs.docker-tag-latest && format(',{0}:latest',env.ALTERNATE_DOCKER_REPOSITORY)|| '', inputs.docker-tag && format(',{0}:{1}',env.ALTERNATE_DOCKER_REPOSITORY, inputs.docker-tag) || '') || '' }}
+      # - name: Publish Pypi Package
+      #   # This step expects a built package to be in the dist/ directory
+      #   if: inputs.pypi-publish && github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+      #   env:
+      #     UV_PUBLISH_URL: ${{inputs.pypi-repository-url}}
+      #   run: |
+      #     uv build
+      #     uv publish
 
-    # - name: Publish Pypi Package
-    #   # This step expects a built package to be in the dist/ directory
-    #   if: inputs.pypi-publish && github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-    #   env:
-    #     UV_PUBLISH_URL: ${{inputs.pypi-repository-url}}
-    #   run: |
-    #     uv build
-    #     uv publish
+      - name: Bump Repository
+        id: bump_repository
+        if: inputs.bump-app != ''
+        run: |
+          python -c 'import botocore; import requests' || pip install boto3 requests
+          python -c '
+          import subprocess
 
-    - name: Bump Repository
-      id: bump_repository
-      if: inputs.bump-app != ''
-      run: |
-        python -c 'import botocore; import requests' || pip install boto3 requests
-        python -c '
-        import subprocess
+          import boto3
+          import botocore
+          import requests
 
-        import boto3
-        import botocore
-        import requests
-
-        token = botocore.signers.generate_presigned_url(
-            boto3.client("sts"), "get_caller_identity", HttpMethod="GET"
-        )
-        jwt_token = requests.post(
-            "https://tickforge.onuptick.com/token", data={"username": token}
-        ).json()["access_token"]
-        headers = {"Authorization": f"Bearer {jwt_token}"}
-        default_user = subprocess.check_output(
-            "git log -n 1 --pretty=format:%an".split()
-        ).decode("utf-8")
-        default_email = subprocess.check_output(
-            "git log -n 1 --pretty=format:%ae".split()
-        ).decode("utf-8")
-        data = {"author_name": default_user, "author_email": default_email, "redeploy": False}
-        response = requests.post(
-            "https://tickforge.onuptick.com/api/workspaces/${{inputs.bump-app}}/bump",
-            json=data,
-            headers=headers,
-        )
-        print(response.json())
-        response.raise_for_status()
-        '
+          token = botocore.signers.generate_presigned_url(
+              boto3.client("sts"), "get_caller_identity", HttpMethod="GET"
+          )
+          jwt_token = requests.post(
+              "https://tickforge.onuptick.com/token", data={"username": token}
+          ).json()["access_token"]
+          headers = {"Authorization": f"Bearer {jwt_token}"}
+          default_user = subprocess.check_output(
+              "git log -n 1 --pretty=format:%an".split()
+          ).decode("utf-8")
+          default_email = subprocess.check_output(
+              "git log -n 1 --pretty=format:%ae".split()
+          ).decode("utf-8")
+          data = {"author_name": default_user, "author_email": default_email, "redeploy": False}
+          response = requests.post(
+              "https://tickforge.onuptick.com/api/workspaces/${{inputs.bump-app}}/bump",
+              json=data,
+              headers=headers,
+          )
+          print(response.json())
+          response.raise_for_status()
+          '
