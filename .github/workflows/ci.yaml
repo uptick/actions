@@ -210,7 +210,7 @@ on:
         description: "Docker Build arguments as JSON array of key value pairs"
         required: false
         type: string
-        default: '[{"ARG1":"value1"},{"ARG2":"value2"}]'
+        default: '{"ARG1":"value1","ARG2":"value2"}'
 
       ecr-type:
         description: "The type of AWS ECR repository to push to public or private"
