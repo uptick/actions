@@ -207,12 +207,10 @@ on:
         default: true
 
       docker-build-args:
-        description: "Docker Build arguments as JSON array of key value pairs"
+        description: "A comma separated list of Docker Build arguments"
         required: false
         type: string
-        default: |
-          ARG1=value1
-          ARG2=value2
+        default: "ARG1=value1,ARG2=value2"
 
       ecr-type:
         description: "The type of AWS ECR repository to push to public or private"
@@ -443,8 +441,7 @@ jobs:
           cache-to: type=gha, mode=max
           provenance: false
           platforms: ${{inputs.docker-image-platforms}}
-          build-args: |
-            {{ inputs.docker-build-args }}
+          build-args: ${{ inputs.docker-build-args }}
           push: ${{inputs.docker-push}}
           # TODO: refactor the giant tags line into a script
           # Default to just the git short hash. if docker-tag-latest ; also tag as the latest image
