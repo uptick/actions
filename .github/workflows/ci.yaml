@@ -116,6 +116,12 @@ on:
         type: string
         default: "16"
 
+      # Bun settings
+      bun:
+        description: "Install and set up bun"
+        type: boolean
+        default: false
+
       # PNPM SETTINGS
       pnpm:
         description: "Install and set up pnpm"
@@ -366,6 +372,13 @@ jobs:
         if: inputs.uv && inputs.uv-sync
         working-directory: ${{ inputs.uv-directory }}
         run: ${{ inputs.uv-sync-command }}
+
+      ##### BUN SETUP (to replace pnpm and node setup)
+      - name: Install Bun
+        if: inputs.bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.1.17
 
       ##### NODE AND PNPM STUFF
       #
