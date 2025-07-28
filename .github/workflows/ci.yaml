@@ -321,7 +321,7 @@ jobs:
           aws-region: ${{ inputs.aws-region }}
 
       ### Mise
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2
         if: inputs.mise
         with:
           install: ${{ inputs.mise-install }} # [default: true] run `mise install`
@@ -357,7 +357,7 @@ jobs:
       #
       - name: Install uv
         if: inputs.uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3
         with:
           version: ${{ inputs.uv-version }}
           enable-cache: ${{ inputs.uv-cache }}
@@ -377,7 +377,7 @@ jobs:
 
       - name: Install PNPM
         if: inputs.pnpm
-        uses: pnpm/action-setup@v2.2.4
+        uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # v2.2.4
         with:
           version: next-7
 
