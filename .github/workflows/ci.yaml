@@ -172,9 +172,14 @@ on:
         default: false
 
       docker-context:
-        description: "Where to find the Dockerfile"
+        description: "The build context folder to send to Docker (root of files for the build)"
         type: string
         default: "."
+      
+      docker-file-path:
+        description: "Path to the Dockerfile"
+        type: string
+        default: "Dockerfile"
 
       docker-prefix:
         description: "Image tag to prefix. Eg: {subman}-aed1f13, where subman is the docker-prefix"
@@ -436,7 +441,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: "${{ inputs.docker-context }}"
-          file: Dockerfile
+          file: "${{ inputs.docker-file-path }}"
           cache-from: type=gha
           cache-to: type=gha, mode=max
           provenance: false
