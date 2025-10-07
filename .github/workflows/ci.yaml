@@ -278,7 +278,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # ratchet:actions/checkout@v5
         with:
           # TODO: Configure fetch-depth?
           fetch-depth: 2
@@ -313,7 +313,7 @@ jobs:
           cat $GITHUB_ENV
 
       - name: Setup and Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # ratchet:aws-actions/configure-aws-credentials@v4
         if: inputs.aws || inputs.docker-enabled || (inputs.bump-app != '')
         with:
           role-to-assume: ${{ inputs.aws-iam-role-arn }}
@@ -332,7 +332,7 @@ jobs:
       #
       - name: Install Python
         if: inputs.python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@3542bca2639a428e1796aaa6a2ffef0c0f575566 # ratchet:actions/setup-python@v3
         with:
           python-version: ${{ inputs.python-version }}
 
@@ -341,7 +341,7 @@ jobs:
         run: pip3 install poetry==${{ inputs.poetry-version }}
 
       - name: Cache Poetry Dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # ratchet:actions/cache@v4
         if: inputs.poetry
         with:
           path: ~/.cache/pypoetry
@@ -371,7 +371,7 @@ jobs:
       #
       - name: Install Node
         if: inputs.node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # ratchet:actions/setup-node@v3
         with:
           node-version: ${{ inputs.node-version }}
 
@@ -389,7 +389,7 @@ jobs:
           echo "pnpm_cache_dir=$(pnpm store path)" >> $GITHUB_OUTPUT
 
       - name: Setup PNPM Cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # ratchet:actions/cache@v4
         if: inputs.pnpm
         with:
           path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
@@ -419,12 +419,12 @@ jobs:
 
       - name: Set up Docker Buildx
         if: inputs.docker-enabled || inputs.docker-buildx-enabled
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@885d1462b80bc1c1c7f0b00334ad271f09369c55 # ratchet:docker/setup-buildx-action@v2
       # Login to multiple repos if not pushing to only the deployments account
       - name: Login to Amazon ECR Private
         if: inputs.docker-enabled
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # ratchet:aws-actions/amazon-ecr-login@v2
         with:
           registry-type: ${{ inputs.ecr-type }}
           registries: "${{ env.MAIN_ACCOUNT_ID == env.DEPLOYMENTS_ACCOUNT_ID && env.MAIN_ACCOUNT_ID || format('{0},{1}', env.MAIN_ACCOUNT_ID, env.DEPLOYMENTS_ACCOUNT_ID) }}"
@@ -433,7 +433,7 @@ jobs:
       - name: Build and push image
         id: docker_build_push
         if: inputs.docker-enabled
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # ratchet:docker/build-push-action@v6
         with:
           context: "${{ inputs.docker-context }}"
           file: Dockerfile
