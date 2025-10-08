@@ -78,14 +78,14 @@ on:
         description: "s3 bucket name for s3pypi"
         type: string
         required: false
-        default: "s3pypi-610829907584-us-east-1" 
-      
+        default: "s3pypi-610829907584-us-east-1"
+
       pypi-dist:
         description: "Build folder of the pypi package."
         type: string
         required: false
-        default: "dist/*" 
-      
+        default: "dist/*"
+
       # uv settings
       uv:
         description: "Install and set up uv"
