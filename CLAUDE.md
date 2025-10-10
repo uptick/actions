@@ -19,6 +19,9 @@ The "God CI Pipeline" is the central reusable workflow that handles most CI/CD n
 - Docker multi-platform builds (amd64/arm64)
 - Smart tagging based on git hashes and custom tags
 
+
+
+
 **Major Feature Groups:**
 1. **Language Runtime Setup**: Python, Node.js with version control
 2. **Package Managers**: Poetry, uv, PNPM with dependency caching
@@ -94,3 +97,6 @@ jobs:
 ### Renovation Configuration
 
 The repository uses Renovate for dependency updates (`renovate.json`). GitHub Actions are pinned and managed through dependency updates.
+
+## Documentation
+ALWAYS update README.md instructions whenever input parameters to ci.yaml has changed.

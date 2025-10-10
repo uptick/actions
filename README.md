@@ -66,7 +66,9 @@ jobs:
 | `poetry-install` | boolean | `true` | Install poetry dependencies (including dev) |
 | `poetry-install-command` | string | `"poetry install"` | Specify a different command; defaults to (poetry install) |
 | `poetry-version` | string | `"1.8.2"` | Poetry version to install |
-| `pypi-repository-url` | string | `"https://upload.pypi.org/legacy/"` | If pypi-publish and pypi-repository-url is set, publish to this pypi repository. Requires id-token: write. For testing use https://test.pypi.org/legacy/ |
+| `s3pypi-publish` | boolean | `false` | Set to true if you want to build and publish to private s3pypi repo |
+| `s3pypi-bucket` | string | `"s3pypi-610829907584-us-east-1"` | s3 bucket name for s3pypi |
+| `pypi-dist` | string | `"dist/*"` | Build folder of the pypi package |
 
 ### uv (Python Package Manager)
 
@@ -116,7 +118,7 @@ jobs:
 |-----------|------|---------|-------------|
 | `aws` | boolean | `false` | If enabled set up AWS Credentials |
 | `aws-region` | string | `"ap-southeast-2"` | The AWS region to configure the AWS profile with |
-| `aws-iam-role-arn` | string | `"arn:aws:iam::305686791668:role/default-github-actions-ci-role"` | AWS IAM Role to assume |
+| `aws-iam-role-arn` | string | `"arn:aws:iam::610829907584:role/default-github-actions-ci-role"` | AWS IAM Role to assume |
 
 ### mise
 
