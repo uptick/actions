@@ -1,0 +1,104 @@
+# A resuable github action for getting claude code
+# to review a pull request.
+on:
+  workflow_call:
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN:
+        description: "The OAuth token for Claude Code"
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: write # permissions for claude to comment on the pull request
+  issues: write # permissions for claude to comment on the pull request
+
+jobs:
+  claude-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          github_token: ${{ github.token }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Allow Bash/gh/git and read-only tools; block file-writing tools
+          claude_args: >-
+            --print
+            --output-format stream-json
+            --allowedTools "Bash" "Read" "Grep" "Glob"
+
+          prompt: |
+            You are an expert Senior Software Engineer performing a code review of a pull request.
+
+            Refer to CLAUDE.md or AGENTS.md for patterns / context / best practices.
+
+            If AGENTS_CODEREVIEW.md exists, follow the instructions in that file.
+
+            Review PR #${{ github.event.pull_request.number }} in ${{ github.repository }}.
+
+            Scope:
+            - REVIEW ONLY THE LATEST CHANGES (latest commit).
+            - Avoid duplicates and items already fixed or discussed (read existing PR comments/reviews).
+
+            How to inspect:
+            - HEAD_SHA=$(gh pr view ${{ github.event.pull_request.number }} --json headRefOid --jq .headRefOid)
+            - gh pr view ${{ github.event.pull_request.number }} --json files,comments,reviews
+            - git diff --unified=0 "${HEAD_SHA}^" "${HEAD_SHA}" (focus on RIGHT-side additions/edits)
+
+            Optional prior context (only if helpful):
+            - gh pr list --state merged --limit 10
+            - gh pr view <number> --json title,body,files
+            - gh pr diff  <number>
+
+            Policy: CRITICAL ONLY (no fixed cap; keep focused).
+            - Security: secret leakage, injection, unsafe eval/exec, auth/authz flaws
+            - Correctness: runtime errors, data loss, broken builds/tests, null/undefined misuse
+            - Severe performance/availability: e.g., N^2 hot paths on large inputs, blocking I/O on request paths
+            Skip nits, style, minor readability, and subjective opinions. Group duplicates; one comment per unique issue with a concrete fix.
+
+            Posting rules (no file writes):
+            1) Inline line-anchored comments (always prefer this):
+               - Never use "line" for this endpoint; use "position".
+               - Compute the correct position from the PR files API patch:
+                 - FILE="<relative/path>"
+                 - PATCH=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files --paginate --jq \
+                   '.[] | select(.filename=="'"$FILE"'") | .patch')
+                 - Identify the exact added/changed line you want to comment on as it appears in PATCH (including the leading "+" for additions).
+                 - POS=$(awk 'BEGIN{pos=0} {pos++; if ($0 ~ /^\+/ && index($0, "<unique-snippet-from-the-changed-line>")>0) {print pos; exit}}' <<< "$PATCH")
+                 - If the line wasn’t added (context line) but changed, match the nearest '+' line that reflects the fix location.
+               - Then post the inline comment anchored to the position:
+                 HEAD_SHA=$(gh pr view ${{ github.event.pull_request.number }} --json headRefOid --jq .headRefOid)
+                 gh api -X POST \
+                   repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
+                   -f commit_id="$HEAD_SHA" \
+                   -f path="$FILE" \
+                   -f position="$POS" \
+                   --raw-field body=$'### Issue: <short title>\nWhy: <concrete impact/severity>\nFix: <specific steps/code change>\n\n```ts\n// minimal example or patch\n```\n'
+               - Do not use gh pr review for inline; only use gh api with position.
+               - Skip if a substantially similar comment already exists/threaded for that line.
+
+            2) If no critical issues are found:
+               - Post exactly one success comment:
+                 gh pr comment ${{ github.event.pull_request.number }} --body 'LGTM ✅'
+
+            3) If you cannot reliably compute position for a truly critical issue (last resort only):
+               - Post a regular review comment referencing the file and line in the body so it’s still actionable:
+                 gh pr review ${{ github.event.pull_request.number }} --comment --body "### Issue: <short title>\nFile: <path> @ <approx line>\nWhy: <impact>\nFix: <concrete steps>\n\n```ts\n// minimal example or patch\n```"
+
+            Rules:
+            - Use only Bash (gh, git) plus Read/Grep/Glob; do NOT write files.
+            - Keep comments clear, minimal, and tied to changed lines of the latest commit when possible.
+            - Only post when you can propose a concrete, actionable fix.
