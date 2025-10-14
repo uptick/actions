@@ -1,0 +1,17 @@
+name: Test claude code review
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write # permissions for claude to comment on the pull request
+  issues: write # permissions for claude to comment on the pull request
+
+
+jobs:
+  test-claude-review:
+    uses: ./.github/workflows/claude_review.yaml
+    secrets: inherit
