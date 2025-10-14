@@ -32,17 +32,24 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN}}
+          claude_args: >-
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*), Bash(git diff:*), Bash(gh pr review:*), Read, Grep, Glob"
+            --print
+            --output-format stream-json
 
           prompt: |-
-            You are an expert Senior Software Engineer performing a code review of a pull request.
+            You are an expert Senior Software Engineer performing a code review of a pull request
+
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Note: The PR branch is already checked out in the current working directory.
 
             Refer to CLAUDE.md or AGENTS.md for patterns / context / best practices.
 
-            If AGENTS_CODEREVIEW.md exists, follow the instructions in that file.
+            If AGENTS_CODEREVIEW.md exists, follow the instructions in that file. If AGENTS_CODEREVIEW.md does not exist; follow the following code review instructions between the <default-code-review-instructions> tags:
 
-            If AGENTS_CODEREVIEW.md does not exit; follow the following code review instructions between the ``` tags:
-
-            ```
+            <default-code-review-instructions>
             Perform a comprehensive code review with the following focus areas:
 
             1. **Code Quality**
@@ -64,7 +71,7 @@ jobs:
                - Verify adequate test coverage
                - Review test quality and edge cases
                - Check for missing test scenarios
-            ```
+            </default-code-review-instructions>
 
             Additional Instructions:
 
@@ -83,25 +90,14 @@ jobs:
             - gh pr diff  <number>
 
             Posting rules (no file writes):
-            1) Inline line-anchored comments (always prefer this):
-               - Never use "line" for this endpoint; use "position".
-               - Compute the correct position from the PR files API patch:
-                 - FILE="<relative/path>"
-                 - PATCH=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files --paginate --jq \
-                   '.[] | select(.filename=="'"$FILE"'") | .patch')
-                 - Identify the exact added/changed line you want to comment on as it appears in PATCH (including the leading "+" for additions).
-                 - POS=$(awk 'BEGIN{pos=0} {pos++; if ($0 ~ /^\+/ && index($0, "<unique-snippet-from-the-changed-line>")>0) {print pos; exit}}' <<< "$PATCH")
-                 - If the line wasn’t added (context line) but changed, match the nearest '+' line that reflects the fix location.
-               - Then post the inline comment anchored to the position:
-                 HEAD_SHA=$(gh pr view ${{ github.event.pull_request.number }} --json headRefOid --jq .headRefOid)
-                 gh api -X POST \
-                   repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
-                   -f commit_id="$HEAD_SHA" \
-                   -f path="$FILE" \
-                   -f position="$POS" \
-                   --raw-field body=$'### Issue: <short title>\nWhy: <concrete impact/severity>\nFix: <specific steps/code change>\n\n```ts\n// minimal example or patch\n```\n'
-               - Do not use gh pr review for inline; only use gh api with position.
+
+            Use `gh pr comment` for top-level feedback.
+            Use `mcp__github_inline_comment__create_inline_comment` to highlight specific code issues.
+            Only post GitHub comments - don't submit review text as messages.
+
+            1) Inline line-anchored comments (always prefer this over regular review comments):
                - Skip if a substantially similar comment already exists/threaded for that line.
+               - Use `mcp__github_inline_comment__create_inline_comment` to highlight specific code issues.
 
             2) If no major or critical issues are found:
                - Post exactly one success comment:
