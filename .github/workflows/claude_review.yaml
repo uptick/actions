@@ -22,13 +22,13 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # ratchet:actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Run Claude Code Review
         id: claude-review
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@777ffcbfc9d2e2b07f3cfec41b7c7eadedd1f0dc # ratchet:anthropics/claude-code-action@v1
         env:
           GH_TOKEN: ${{ github.token }}
         with:
@@ -40,7 +40,7 @@ jobs:
             --output-format stream-json
             --allowedTools "Bash" "Read" "Grep" "Glob"
 
-          prompt: |
+          prompt: |-
             You are an expert Senior Software Engineer performing a code review of a pull request.
 
             Refer to CLAUDE.md or AGENTS.md for patterns / context / best practices.
