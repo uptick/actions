@@ -1,1 +1,6 @@
-OPENAPI_KEY = "sk-proj-1234567890"
+def rofl():
+    pass
+
+
+def lol():
+    pass
