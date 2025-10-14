@@ -98,6 +98,7 @@ jobs:
             1) Inline line-anchored comments (always prefer this over regular review comments):
                - Skip if a substantially similar comment already exists/threaded for that line.
                - Use `mcp__github_inline_comment__create_inline_comment` to highlight specific code issues.
+               - Do not leave inline comments for stylistic nitpicks (whitespace, formatting, etc)
 
             2) If no major or critical issues are found:
                - Post exactly one success comment:
