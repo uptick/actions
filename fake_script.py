@@ -1,0 +1,1 @@
+OPENAPI_KEY = "sk-proj-1234567890"
