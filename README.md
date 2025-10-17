@@ -103,6 +103,71 @@ Create an `AGENTS_CODEREVIEW.md` file in your repository root to customize the r
 - Testing (coverage, test quality, edge cases)
 
 
+### Claude Code @mention pipeline
+
+Interactive Claude Code integration that responds to @claude mentions in issues, pull requests, and comments. This workflow enables team members to ask Claude Code questions or request assistance directly in GitHub conversations.
+
+**Features:**
+
+- Responds to @claude mentions in issue comments
+- Responds to @claude mentions in pull request review comments
+- Responds to @claude mentions in pull request reviews
+- Responds to @claude mentions in new issues
+- Progress tracking with automated status comments
+- Full repository context awareness
+
+**Usage:**
+
+Add this workflow to your repository at `.github/workflows/claude-mention.yml`:
+
+```yaml
+name: Claude Code Mention
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+  issues: write
+  actions: read
+
+jobs:
+  claude:
+    uses: uptick/actions/.github/workflows/claude_mention.yaml@main
+    secrets:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      # OR use OAuth token instead:
+      # CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+```
+
+**Required Secrets:**
+
+You must configure ONE of the following secrets in your repository:
+
+| Secret | Description |
+|--------|-------------|
+| `ANTHROPIC_API_KEY` | Anthropic API key for API-based billing (recommended) |
+| `CLAUDE_CODE_OAUTH_TOKEN` | OAuth token for Claude Code (alternative to API key) |
+
+**How to Use:**
+
+Simply mention @claude in any:
+- Issue comment
+- Pull request comment
+- Pull request review comment
+- New issue (in title or body)
+
+
+
 # Security
 
 - We avoid adding external dependencies where possible.
