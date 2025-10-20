@@ -16,7 +16,6 @@ permissions:
   issues: write # permissions for claude to comment on the pull request
   actions: read # Required for Claude to read CI results on PRs
 
-
 jobs:
   test-claude-mention:
     uses: ./.github/workflows/claude_mention.yaml

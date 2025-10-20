@@ -13,16 +13,15 @@ This repository contains reusable GitHub Actions workflows for Uptick's CI/CD pi
 The "God CI Pipeline" is the central reusable workflow that handles most CI/CD needs. It's designed as a single workflow with extensive configurability through inputs:
 
 **Key Design Principles:**
+
 - All-in-one workflow with opt-in features via boolean flags
 - Standardized caching for Poetry, PNPM, uv, and mise
 - AWS authentication via OIDC (no long-lived credentials)
 - Docker multi-platform builds (amd64/arm64)
 - Smart tagging based on git hashes and custom tags
 
-
-
-
 **Major Feature Groups:**
+
 1. **Language Runtime Setup**: Python, Node.js with version control
 2. **Package Managers**: Poetry, uv, PNPM with dependency caching
 3. **Cloud Integration**: AWS OIDC authentication, ECR login
@@ -30,6 +29,7 @@ The "God CI Pipeline" is the central reusable workflow that handles most CI/CD n
 5. **Deployment**: Docker image building/pushing to ECR
 
 **Environment Variables Set Automatically:**
+
 - `BRANCH_NAME`: Current branch or PR head ref
 - `GIT_SHORT_HASH`: 7-character git hash
 - `GITHUB_EVENT`: Either "push" or "pull_request"
@@ -44,6 +44,7 @@ Test workflows in `.github/workflows/test-*.y*ml` demonstrate usage patterns and
 ### Testing Changes
 
 When modifying the main `ci.yaml` workflow:
+
 1. Review existing test workflows to understand feature interactions
 2. Add new test cases in `.github/workflows/test-*.yaml` for new features
 3. Test workflows run on pull requests automatically
@@ -51,6 +52,7 @@ When modifying the main `ci.yaml` workflow:
 ### Docker Image Tagging Logic
 
 The workflow uses complex conditional tagging (lines 456-458 in ci.yaml):
+
 - Default: `<repository>:<git-short-hash>`
 - With `docker-prefix`: `<repository>:<prefix>-<git-short-hash>`
 - With `docker-tag-latest`: Also tags as `latest`
@@ -60,6 +62,7 @@ The workflow uses complex conditional tagging (lines 456-458 in ci.yaml):
 ### Security Constraints
 
 **IMPORTANT**: This repository follows strict security practices:
+
 - Avoid adding external GitHub Actions dependencies where possible
 - Implement functionality via Python/bash scripts
 - Use only built-in libraries (no pip installs in workflows, except Poetry itself)
@@ -68,6 +71,7 @@ The workflow uses complex conditional tagging (lines 456-458 in ci.yaml):
 ### Python Helper Scripts
 
 `scripts/uptick_github.py` provides GitHub API utilities:
+
 - Fetches workflow run and job information
 - Determines previous build status for the same branch
 - Calculates time taken for jobs
@@ -76,6 +80,7 @@ The workflow uses complex conditional tagging (lines 456-458 in ci.yaml):
 ### Example Usage
 
 Basic usage pattern from README:
+
 ```yaml
 permissions:
   id-token: write # Required for federated aws oidc
@@ -99,4 +104,5 @@ jobs:
 The repository uses Renovate for dependency updates (`renovate.json`). GitHub Actions are pinned and managed through dependency updates.
 
 ## Documentation
+
 ALWAYS update README.md instructions whenever input parameters to ci.yaml has changed.
