@@ -78,14 +78,14 @@ on:
         description: "s3 bucket name for s3pypi"
         type: string
         required: false
-        default: "s3pypi-610829907584-us-east-1" 
-      
+        default: "s3pypi-610829907584-us-east-1"
+
       pypi-dist:
         description: "Build folder of the pypi package."
         type: string
         required: false
-        default: "dist/*" 
-      
+        default: "dist/*"
+
       # uv settings
       uv:
         description: "Install and set up uv"
@@ -368,7 +368,7 @@ jobs:
       ### uv stuff
       #
       - name: Install uv
-        if: inputs.uv
+        if: inputs.uv || inputs.bump-app != ''
         uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3
         with:
           version: ${{ inputs.uv-version }}
@@ -479,10 +479,8 @@ jobs:
         id: bump_repository
         if: inputs.bump-app != ''
         run: |
-          python -c 'import botocore; import requests' || pip install boto3 requests
-          python -c '
+          uv run --no-project --with boto3 --with requests python -c '
           import subprocess
-
           import boto3
           import botocore
           import requests
@@ -490,9 +488,11 @@ jobs:
           token = botocore.signers.generate_presigned_url(
               boto3.client("sts"), "get_caller_identity", HttpMethod="GET"
           )
-          jwt_token = requests.post(
+          response = requests.post(
               "https://tickforge.onuptick.com/token", data={"username": token}
-          ).json()["access_token"]
+          )
+          response.raise_for_status()
+          jwt_token = response.json()["access_token"]
           headers = {"Authorization": f"Bearer {jwt_token}"}
           default_user = subprocess.check_output(
               "git log -n 1 --pretty=format:%an".split()
