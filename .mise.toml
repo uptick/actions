@@ -1,2 +1,12 @@
 [tools]
 python = "3.13.7"
+
+[tasks.install]
+run = [
+    "pre-commit install"
+]
+
+[tasks.lint]
+run = [
+    "pre-commit run --all"
+]
