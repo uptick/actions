@@ -24,7 +24,7 @@ jobs:
       docker-prefix: main
       docker-tag-latest: true
       docker-tag: testlol
-      docker-repository: 305686791668.dkr.ecr.ap-southeast-2.amazonaws.com/github-actions-ci
+      docker-repository: 610829907584.dkr.ecr.ap-southeast-2.amazonaws.com/github-actions-ci
 
   docker-no-prefix-specified:
     uses: ./.github/workflows/ci.yaml
@@ -33,4 +33,4 @@ jobs:
       command: echo good
       debug: true
       docker-enabled: true
-      docker-repository: 305686791668.dkr.ecr.ap-southeast-2.amazonaws.com/github-actions-ci
+      docker-repository: 610829907584.dkr.ecr.ap-southeast-2.amazonaws.com/github-actions-ci
