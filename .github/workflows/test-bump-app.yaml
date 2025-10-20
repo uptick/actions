@@ -19,6 +19,6 @@ jobs:
     secrets: inherit
     with:
       debug: true
-      bump-app: "fake-app"
+      bump-app: "tickforge"
       command: |
-        echo "williams-testing-1"
+        echo "test"
