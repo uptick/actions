@@ -43,8 +43,6 @@ jobs:
 
 **[Reference input parameters to ci.yaml](./ci_command_usage.md)**
 
-
-
 ### Claude Code PR Review pipeline
 
 Automated PR code review using Claude Code. This workflow performs comprehensive code reviews focusing on code quality, security, performance, and testing and leaves inline comments (instead of a larger overall comment)
@@ -89,19 +87,19 @@ jobs:
 
 You must configure ONE of the following secrets in your repository:
 
-| Secret | Description |
-|--------|-------------|
-| `ANTHROPIC_API_KEY` | Anthropic API key for API-based billing (recommended) |
-| `CLAUDE_CODE_OAUTH_TOKEN` | OAuth token for Claude Code (alternative to API key) |
+| Secret                    | Description                                           |
+| ------------------------- | ----------------------------------------------------- |
+| `ANTHROPIC_API_KEY`       | Anthropic API key for API-based billing (recommended) |
+| `CLAUDE_CODE_OAUTH_TOKEN` | OAuth token for Claude Code (alternative to API key)  |
 
 **Customization:**
 
 Create an `AGENTS_CODEREVIEW.md` file in your repository root to customize the review instructions. If this file doesn't exist, Claude will use the default review criteria focusing on:
+
 - Code Quality (clean code, error handling, readability)
 - Security (vulnerabilities, input validation, auth/authz)
 - Performance (bottlenecks, query efficiency, resource management)
 - Testing (coverage, test quality, edge cases)
-
 
 ### Claude Code @mention pipeline
 
@@ -153,20 +151,19 @@ jobs:
 
 You must configure ONE of the following secrets in your repository:
 
-| Secret | Description |
-|--------|-------------|
-| `ANTHROPIC_API_KEY` | Anthropic API key for API-based billing (recommended) |
-| `CLAUDE_CODE_OAUTH_TOKEN` | OAuth token for Claude Code (alternative to API key) |
+| Secret                    | Description                                           |
+| ------------------------- | ----------------------------------------------------- |
+| `ANTHROPIC_API_KEY`       | Anthropic API key for API-based billing (recommended) |
+| `CLAUDE_CODE_OAUTH_TOKEN` | OAuth token for Claude Code (alternative to API key)  |
 
 **How to Use:**
 
 Simply mention @claude in any:
+
 - Issue comment
 - Pull request comment
 - Pull request review comment
 - New issue (in title or body)
-
-
 
 # Security
 
@@ -177,4 +174,3 @@ Simply mention @claude in any:
 - Pin dependencies via ratchet `ratchet pin .github/*/*.yaml`
 
 Please implement functionality via pythons / bash scripts and please rely only on built in libraries.
-

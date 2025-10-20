@@ -9,7 +9,6 @@ permissions:
   issues: write # to be able to comment on released issues
   pull-requests: write # to be able to comment on released pull requests
 
-
 jobs:
   python-command:
     uses: ./.github/workflows/ci.yaml

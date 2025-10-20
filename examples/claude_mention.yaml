@@ -17,7 +17,6 @@ permissions:
   issues: write # permissions for claude to comment on the pull request
   actions: read # Required for Claude to read CI results on PRs
 
-
 jobs:
   claude-mention:
     uses: uptick/actions/.github/workflows/claude_mention.yaml@main

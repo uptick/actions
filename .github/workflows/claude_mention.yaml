@@ -21,13 +21,12 @@ on:
         description: "The API token for Claude Code; if using API key (for api based billing)"
         required: false
 
-
 permissions:
-    id-token: write
-    contents: read
-    pull-requests: write # permissions for claude to comment on the pull request
-    issues: write # permissions for claude to comment on the pull request
-    actions: read # Required for Claude to read CI results on PRs
+  id-token: write
+  contents: read
+  pull-requests: write # permissions for claude to comment on the pull request
+  issues: write # permissions for claude to comment on the pull request
+  actions: read # Required for Claude to read CI results on PRs
 
 jobs:
   claude:

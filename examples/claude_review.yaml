@@ -10,7 +10,6 @@ permissions:
   pull-requests: write # permissions for claude to comment on the pull request
   issues: write # permissions for claude to comment on the pull request
 
-
 jobs:
   claude-review:
     uses: uptick/actions/.github/workflows/claude_review.yaml@main
