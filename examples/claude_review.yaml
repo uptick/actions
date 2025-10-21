@@ -12,5 +12,5 @@ permissions:
 
 jobs:
   claude-review:
-    uses: uptick/actions/.github/workflows/claude_review.yaml@main
+    uses: uptick/actions/.github/workflows/claude_review.yaml@main # ratchet:exclude
     secrets: inherit

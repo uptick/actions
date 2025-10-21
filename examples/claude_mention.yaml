@@ -19,5 +19,5 @@ permissions:
 
 jobs:
   claude-mention:
-    uses: uptick/actions/.github/workflows/claude_mention.yaml@main
+    uses: uptick/actions/.github/workflows/claude_mention.yaml@main # ratchet:exclude
     secrets: inherit
