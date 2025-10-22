@@ -33,8 +33,9 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN}}
+          use_sticky_comment: true
           claude_args: >-
-            --allowedTools "mcp__github_comment__update_claude_comment,mcp__github__get_pull_request_diff,mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*), Bash(git diff:*), Bash(gh pr review:*), Read, Grep, Glob"
+            --allowedTools "mcp__github__get_pull_request_diff,mcp__github_inline_comment__create_inline_comment,mcp__github__get_pull_request_comments,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*), Bash(git diff:*), Bash(gh pr review:*), Bash(gh api:*), Read, Grep, Glob"
             --print
             --output-format stream-json
 
@@ -74,42 +75,96 @@ jobs:
                - Verify adequate test coverage
                - Review test quality and edge cases
                - Check for missing test scenarios
+
+            Things to ignore:
+            - Grammar
+            - Formatting
+            - Stylistic nitpicks
+
+            Only focus on issues that are critical and that you are certain about. Do not annoy the developer
+            with non critical feedback.
             </default-code-review-instructions>
 
             ## Instructions for reviewing the latest changes
 
             Scope:
-            - REVIEW ONLY THE LATEST CHANGES in the PR branch.
             - Avoid duplicates and items already fixed or discussed (read existing PR comments/reviews).
 
-            How to inspect:
-            1. Get the HEAD SHA:
-              `HEAD_SHA=$(gh pr view ${{ github.event.pull_request.number }} --json headRefOid --jq .headRefOid)`
-            2. Read up existing files, comments, and reviews:
-              `gh pr view ${{ github.event.pull_request.number }} --json files,comments,reviews,title`
-            3. getting the diff between changes (focus on RIGHT-side additions/edits):
-              `git diff --unified=0 "${HEAD_SHA}^" "${HEAD_SHA}"`
+            How to inspect code:
+            1. Read up existing files, and reviews, HEAD_SHA (headRefOid):
+              `gh pr view ${{ github.event.pull_request.number }} --json files,reviews,title,headRefOid`
+            2. getting the latest diff between changes (focus on RIGHT-side additions/edits):
+              `git diff --unified=0 "<commit-sha-from-step-1>^" "<commit-sha-from-step-1>"`
+            3. List (with comment IDs, thread info, comment info) in the PR in order to make updates to existing comments.
+              ```
+              gh api graphql -f query='
+                  query {
+                    repository(owner: "${{ github.repository_owner }}", name: "${{ github.event.repository.name }}") {
+                      pullRequest(number: ${{github.event.pull_request.number}}) {
+                        reviewThreads(first: 100) {
+                          nodes {
+                            id
+                            isResolved
+                            isOutdated
+                            path
+                            line
+                            startLine
+                            comments(first: 10) {
+                              nodes {
+                                id
+                                body
+                                databaseId # for REST API
+                                createdAt
+                                updatedAt
+                                authorAssociation
+                                author {
+                                  login
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }'
+              ```
+
+            ## Executing bash command rules
+            - DO NOT use shell substitution for variables in bash commands or backticks. THESE WILL FAIL due to security sandboxing.
 
             ## Posting rules
             - DO NOT write to files
-            - Use `gh pr comment` for top-level feedback.
-            - Use `mcp__github_inline_comment__create_inline_comment` to highlight specific code issues.
-            - Delete the old top-level feedback comment if it already exists and create a new one with the latest feedback.
+            - DO NOT REPLY TO A COMMENT IF THE PROBLEM HAS NOT BEEN RESOLVED BY THE DEVELOPER. We do not want to clutter the conversation with comments that are not resolved.
             - Only post GitHub comments - don't submit review text as messages.
             - Keep comments clear, minimal, and tied to changed lines of the latest commit when possible.
-            - Only post when you can propose a concrete, actionable fix.
+            - Only post when you can propose a concrete, actionable fix and when you are VERY CONFIDENT in your assessment.
+            - Updating an existing comment:
+            `gh api repos/${{ github.repository }}/issues/comments/<COMMENT-ID> --method PATCH --field body="Your updated comment text"`
+            - Reply to an existing comment:
+            `gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments/<COMMENT-ID>/replies --method POST --field body="<REPLY-TO-THE-REVIEW-COMMENT>"`
+            - Resolving a conversation thread
+              ```
+              gh api graphql -f query='
+                mutation {
+                  resolveReviewThread(input: {threadId: "THREAD_ID_HERE"}) {
+                    thread {
+                      id
+                      isResolved
+                    }
+                  }
+                }'
+              ```
 
             1) Inline line-anchored comments (always prefer this over regular review comments):
                - Skip if a substantially similar comment already exists/threaded for that line.
                - Use `mcp__github_inline_comment__create_inline_comment` to highlight specific code issues.
-               - Do not leave inline comments for stylistic nitpicks (whitespace, formatting, etc)
 
-            2) If no major or critical issues are found:
-               - Post exactly one success comment:
-                 gh pr comment ${{ github.event.pull_request.number }} --body 'LGTM ✅'
-
-            3) If you cannot reliably compute position for a truly critical issue (last resort only):
+            2) If you cannot reliably compute position for a truly critical issue (last resort only):
                - Post a regular review comment referencing the file and line in the body so it’s still actionable:
                  gh pr review ${{ github.event.pull_request.number }} --comment --body "### Issue: <short title>\nFile: <path> @ <approx line>\nWhy: <impact>\nFix: <concrete steps>\n\n```ts\n// minimal example or patch\n```"
 
-            4) Update the top-level feedback comment if it already exists via: `mcp__github_comment__update_claude_comment`
+            3) Do not post a new top level feedback comment EVER except for the first review. Instead; reply to the existing inline comments and resolve them one by one if they are resolved by the developer.
+
+            4) Resolve any conversation threads created by "claude" that has been resolved by the developer.
+
+            5) Update the top level feedback comment with the final review summary.
