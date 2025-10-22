@@ -174,3 +174,5 @@ Simply mention @claude in any:
 - Pin dependencies via ratchet `ratchet pin .github/*/*.yaml`
 
 Please implement functionality via pythons / bash scripts and please rely only on built in libraries.
+
+TEST
