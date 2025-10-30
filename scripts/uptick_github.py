@@ -142,3 +142,22 @@ if __name__ == "__main__":
     gh = Github()
     print(gh.get_github_job())
     print(gh.get_time_taken())
+
+
+class FakeCode:
+    def __init__(self):
+        self.gh = Github()
+
+    def get_pull_request_title(self) -> str:
+        return self.gh.get_pull_request_title()
+
+    def get_pull_request_summary(self) -> str:
+        return self.gh.get_pull_request_summary()
+
+    def get_pull_request_who_made_it(self) -> str:
+        return self.gh.get_pull_request_who_made_it()
+
+    def not_real_code(self, input: str) -> None:
+        import subprocess
+
+        subprocess.run(f"echo {input}")
