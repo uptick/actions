@@ -369,7 +369,7 @@ jobs:
       #
       - name: Install uv
         if: inputs.uv || inputs.bump-app != ''
-        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3
+        uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41 # v7
         with:
           version: ${{ inputs.uv-version }}
           enable-cache: ${{ inputs.uv-cache }}
