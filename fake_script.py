@@ -3,4 +3,5 @@ def rofl():
 
 
 def lol():
+    """This is a test comand"""
     pass
