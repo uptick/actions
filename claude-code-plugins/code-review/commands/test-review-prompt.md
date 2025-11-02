@@ -24,9 +24,8 @@ To do this, follow these steps precisely:
    3.1. Launch the following two agents in parallel :
    3.2.1 launch (uptick-code-review:code-review) to perform a code review of the changed files
    3.2.2 launch a general agent to determine if the issues in step 2 have been fixed by the most recent changes
-   3.2. Launch an agent (uptick-code-review:false-positive-review) that takes the PR, issue description, and list of relevant rules from CLAUDE.md files (from step 3.1), and returns a score to indicate the agent's level of confidence for each issue is real or false positive.
    3.3. Filter out any issues with a score less than 80 (not critical). If there are no issues that meet this criteria, do not proceed.
-   3.4. For each issue in 3.3 that isn't a duplicate or already resolved, create an inline comment using the (uptick-code-review:gh-inline-commenter) agent. Retrieve the Path/ThreadId/DatabaseId of each new comment so that it can be used in future steps
+   3.4. For each issue in 3.3 that isn't a duplicate or already resolved, create an inline comment. Retrieve the Path/ThreadId/DatabaseId of each new comment so that it can be used in future steps
 
 4. Use the combined issues from step 2 (if they exist) and any issues from steps 3 to create or update a comment on the pull request
    - Indicate and link to the commit that was reviewed
