@@ -10,6 +10,10 @@ permissions:
   issues: write # permissions for claude to comment on the pull request
 
 jobs:
-  test-claude-review:
-    uses: ./.github/workflows/claude_review.yaml
+  # test-claude-review:
+  #   uses: ./.github/workflows/claude_review.yaml
+  #   secrets: inherit
+
+  test-claude-review-2:
+    uses: ./.github/workflows/claude_review_2.yaml
     secrets: inherit
