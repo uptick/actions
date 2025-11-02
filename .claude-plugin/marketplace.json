@@ -1,0 +1,23 @@
+{
+    "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+    "name": "uptick-actions",
+    "version": "1.0.0",
+    "description": "Bundled plugins for the Uptick Actions repository",
+    "owner": {
+      "name": "William Chu",
+      "email": "william.chu@uptickhq.com"
+    },
+    "plugins": [
+      {
+        "name": "uptick-code-review",
+        "description": "Automated code review for pull requests using multiple specialized agents with confidence-based scoring to filter false positives",
+        "version": "1.0.0",
+        "author": {
+          "name": "William Chu",
+          "email": "william.chu@uptickhq.com"
+        },
+        "source": "./claude-code-plugins/code-review",
+        "category": "productivity"
+      }
+    ]
+  }
