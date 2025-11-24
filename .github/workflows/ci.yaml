@@ -333,7 +333,7 @@ jobs:
           aws-region: ${{ inputs.aws-region }}
 
       ### Mise
-      - uses: jdx/mise-action@e3d7b8d67a7958d1207f6ed871e83b1ea780e7b0 # v3
+      - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # v3
         if: inputs.mise
         with:
           install: ${{ inputs.mise-install }} # [default: true] run `mise install`
