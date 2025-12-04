@@ -35,7 +35,8 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN}}
           use_sticky_comment: true
           claude_args: >-
-            --allowedTools "mcp__github__get_pull_request_diff,mcp__github_inline_comment__create_inline_comment,mcp__github__get_pull_request_comments,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*), Bash(git diff:*), Bash(gh pr review:*), Bash(gh api:*), Read, Grep, Glob"
+            --model claude-opus-4-5-20251101
+            --allowedTools "mcp__github__get_pull_request_diff,mcp__github_inline_comment__create_inline_comment,mcp__github__get_pull_request_comments,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*), Bash(git diff:*), Bash(gh api:*), Read, Grep, Glob"
             --print
             --output-format stream-json
 
@@ -159,12 +160,8 @@ jobs:
                - Skip if a substantially similar comment already exists/threaded for that line.
                - Use `mcp__github_inline_comment__create_inline_comment` to highlight specific code issues.
 
-            2) If you cannot reliably compute position for a truly critical issue (last resort only):
-               - Post a regular review comment referencing the file and line in the body so it’s still actionable:
-                 gh pr review ${{ github.event.pull_request.number }} --comment --body "### Issue: <short title>\nFile: <path> @ <approx line>\nWhy: <impact>\nFix: <concrete steps>\n\n```ts\n// minimal example or patch\n```"
+            2) Do not post a new top level feedback comment EVER except for the first review. Instead; reply to the existing inline comments and resolve them one by one if they are resolved by the developer.
 
-            3) Do not post a new top level feedback comment EVER except for the first review. Instead; reply to the existing inline comments and resolve them one by one if they are resolved by the developer.
+            3) Resolve any conversation threads created by "claude" that has been resolved by the developer.
 
-            4) Resolve any conversation threads created by "claude" that has been resolved by the developer.
-
-            5) Update the top level feedback comment with the final review summary.
+            4) Update the top level feedback comment with the final review summary.
