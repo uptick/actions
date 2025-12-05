@@ -156,12 +156,12 @@ jobs:
                 }'
               ```
 
-            1) Inline line-anchored comments (always prefer this over regular review comments):
+            1) When providing feedback use inline line-anchored comments (always prefer this over regular review comments):
                - Skip if a substantially similar comment already exists/threaded for that line.
                - Use `mcp__github_inline_comment__create_inline_comment` to highlight specific code issues.
 
             2) Do not post a new top level feedback comment EVER except for the first review. Instead; reply to the existing inline comments and resolve them one by one if they are resolved by the developer.
 
-            3) Resolve any conversation threads created by "claude" that has been resolved by the developer.
+            3) Resolve any conversation threads created by "claude" that has been resolved by the developer or are no longer relevant due to code changes / deletion. Leave a comment as to why it is now resolved.
 
             4) Update the top level feedback comment with the final review summary.
