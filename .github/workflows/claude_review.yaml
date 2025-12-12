@@ -163,5 +163,6 @@ jobs:
             2) Do not post a new top level feedback comment EVER except for the first review. Instead; reply to the existing inline comments and resolve them one by one if they are resolved by the developer.
 
             3) Resolve any conversation threads created by "claude" that has been resolved by the developer or are no longer relevant due to code changes / deletion. Leave a comment as to why it is now resolved.
+               DO not resolve conversation threads that were not created by claude.
 
             4) Update the top level feedback comment with the final review summary.
