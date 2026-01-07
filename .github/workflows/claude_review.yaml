@@ -115,7 +115,7 @@ jobs:
             <default-code-review-instructions>
             **Bugs**:
             - Identify logical errors
-            - Potential bugs introduced with when interfaces / apis change. Follow the changes to identify any downstream impact / concerns.
+            - Potential bugs introduced when interfaces / apis change. Follow the changes to identify any downstream impact / concerns.
             - Validation issues
 
             **Code Quality:**
