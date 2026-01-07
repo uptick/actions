@@ -39,12 +39,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # ratchet:actions/checkout@v6.0.1
         with:
           fetch-depth: 1
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@6337623ebba10cf8c8214b507993f8062fd4ccfb # v1
+        uses: anthropics/claude-code-action@c9ec2b02b40ac0444c6716e51d5e19ef2e0b8d00 # ratchet:anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
