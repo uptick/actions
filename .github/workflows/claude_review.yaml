@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     if: |
-      (github.event_name == 'pull_request' && !github.event.pull_request.draft && !contains(github.event.pull_request.labels.*.name, 'NOCLAUDE'))
+      (github.event_name == 'pull_request' && !github.event.pull_request.draft && !contains(github.event.pull_request.labels.*.name, 'NOCLAUDE') && !contains(github.event.pull_request.user.login, 'uptick-renovate'))
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # ratchet:actions/checkout@v6.0.1
