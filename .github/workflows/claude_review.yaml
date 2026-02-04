@@ -24,10 +24,14 @@ jobs:
     if: |
       (github.event_name == 'pull_request' && !github.event.pull_request.draft && !contains(github.event.pull_request.labels.*.name, 'NOCLAUDE') && !contains(github.event.pull_request.user.login, 'uptick-renovate'))
     steps:
-      - name: Checkout repository
+      - name: Checkout PR branch
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # ratchet:actions/checkout@v6.0.1
         with:
+          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
+
+      - name: Fetch target branch (shallow)
+        run: git fetch origin ${{ github.event.pull_request.base.ref }}:${{ github.event.pull_request.base.ref }} --depth=1
 
       - name: PR Review with Progress Tracking
         uses: anthropics/claude-code-action@4126f9d9757c0875ff758aa45f3935bc9e3dd1e9 # v1
