@@ -10,38 +10,6 @@ permissions:
   issues: write # permissions for claude to comment on the pull request
 
 jobs:
-  # test-claude-review:
-  #   uses: ./.github/workflows/claude_review.yaml
-  #   secrets: inherit
-
-  claude-review:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    if: |
-      (github.event_name == 'pull_request' && !github.event.pull_request.draft && !contains(github.event.pull_request.labels.*.name, 'NOCLAUDE'))
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # ratchet:actions/checkout@v6.0.1
-        with:
-          fetch-depth: 0
-
-      - name: install claude code.. binary
-        run: |
-          npm install -g @anthropic-ai/claude-code
-          which claude
-          claude plugin marketplace add ./
-          claude plugin install uptick-code-review
-
-      - name: Code Review
-        uses: anthropics/claude-code-action@4126f9d9757c0875ff758aa45f3935bc9e3dd1e9 # v1
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN}}
-          path_to_claude_code_executable: /usr/local/bin/claude
-          claude_args: >-
-            --allowedTools "mcp__github__get_pull_request_diff,mcp__github_inline_comment__create_inline_comment,mcp__github__get_pull_request_comments,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*), Bash(git diff:*), Bash(gh pr review:*), Bash(gh api:*), Read, Grep, Glob, Skill"
-            --print
-            --output-format stream-json
-
-          prompt: |-
-            /uptick-code-review:test-review-prompt Review REPO: ${{ github.repository }} PR NUMBER: ${{ github.event.pull_request.number }}
+  test-claude-review:
+    uses: ./.github/workflows/claude_review.yaml
+    secrets: inherit
