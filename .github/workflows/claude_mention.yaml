@@ -23,7 +23,7 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
   pull-requests: write # permissions for claude to comment on the pull request
   issues: write # permissions for claude to comment on the pull request
   actions: read # Required for Claude to read CI results on PRs
@@ -50,4 +50,4 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true # ✨ Enables tracking comments
           claude_args: >-
-            --model claude-opus-4-5-20251101
+            --model claude-opus-4-6
