@@ -87,10 +87,13 @@ jobs:
 
 You must configure ONE of the following secrets in your repository:
 
-| Secret                    | Description                                           |
-| ------------------------- | ----------------------------------------------------- |
-| `ANTHROPIC_API_KEY`       | Anthropic API key for API-based billing (recommended) |
-| `CLAUDE_CODE_OAUTH_TOKEN` | OAuth token for Claude Code (alternative to API key)  |
+| Secret                         | Description                                                              |
+| ------------------------------ | ------------------------------------------------------------------------ |
+| `ANTHROPIC_API_KEY`            | Anthropic API key for API-based billing (recommended)                    |
+| `CLAUDE_CODE_OAUTH_TOKEN`      | OAuth token for Claude Code (alternative to API key)                     |
+| `CLAUDE_CODE_OAUTH_TOKEN_POOL` | Newline-separated pool of OAuth tokens; one is randomly selected per run |
+
+> **Token Pool:** To distribute rate limits across multiple OAuth tokens, set `CLAUDE_CODE_OAUTH_TOKEN_POOL` as a single secret containing multiple tokens separated by newlines. Each run randomly picks one token. All tokens are masked in logs. If the pool is set, it takes precedence over `CLAUDE_CODE_OAUTH_TOKEN`.
 
 **Customization:**
 
@@ -151,10 +154,13 @@ jobs:
 
 You must configure ONE of the following secrets in your repository:
 
-| Secret                    | Description                                           |
-| ------------------------- | ----------------------------------------------------- |
-| `ANTHROPIC_API_KEY`       | Anthropic API key for API-based billing (recommended) |
-| `CLAUDE_CODE_OAUTH_TOKEN` | OAuth token for Claude Code (alternative to API key)  |
+| Secret                         | Description                                                              |
+| ------------------------------ | ------------------------------------------------------------------------ |
+| `ANTHROPIC_API_KEY`            | Anthropic API key for API-based billing (recommended)                    |
+| `CLAUDE_CODE_OAUTH_TOKEN`      | OAuth token for Claude Code (alternative to API key)                     |
+| `CLAUDE_CODE_OAUTH_TOKEN_POOL` | Newline-separated pool of OAuth tokens; one is randomly selected per run |
+
+> **Token Pool:** To distribute rate limits across multiple OAuth tokens, set `CLAUDE_CODE_OAUTH_TOKEN_POOL` as a single secret containing multiple tokens separated by newlines. Each run randomly picks one token. All tokens are masked in logs. If the pool is set, it takes precedence over `CLAUDE_CODE_OAUTH_TOKEN`.
 
 **How to Use:**
 
@@ -174,6 +180,5 @@ Simply mention @claude in any:
 - Pin dependencies via ratchet `ratchet pin .github/*/*.yaml`
 
 Please implement functionality via pythons / bash scripts and please rely only on built in libraries.
-
 
 CHORE: fake code
