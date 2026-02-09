@@ -59,6 +59,7 @@ jobs:
             echo "selected=$SELECTED" >> "$GITHUB_OUTPUT"
             echo "Token pool: ${#VALID_TOKENS[@]} tokens available, selected index $INDEX"
           else
+            echo "::add-mask::$SINGLE"
             echo "selected=$SINGLE" >> "$GITHUB_OUTPUT"
             echo "Using single CLAUDE_CODE_OAUTH_TOKEN"
           fi
