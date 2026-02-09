@@ -17,6 +17,9 @@ on:
       CLAUDE_CODE_OAUTH_TOKEN:
         description: "The OAuth token for Claude Code; if using personal access token"
         required: false
+      CLAUDE_CODE_OAUTH_TOKEN_POOL:
+        description: "Newline-separated pool of OAuth tokens for Claude Code; one is randomly selected per run"
+        required: false
       ANTHROPIC_API_KEY:
         description: "The API token for Claude Code; if using API key (for api based billing)"
         required: false
@@ -42,11 +45,39 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6.0.2
         with:
           fetch-depth: 1
+      - name: Select OAuth token from pool
+        id: select-token
+        shell: bash
+        run: |
+          if [ -n "$POOL" ]; then
+            # Read tokens into array, mask each one
+            mapfile -t TOKENS <<< "$POOL"
+            VALID_TOKENS=()
+            for token in "${TOKENS[@]}"; do
+              token=$(echo "$token" | xargs)  # trim whitespace
+              [ -z "$token" ] && continue
+              echo "::add-mask::$token"
+              VALID_TOKENS+=("$token")
+            done
+            # Random selection
+            INDEX=$(( RANDOM % ${#VALID_TOKENS[@]} ))
+            SELECTED="${VALID_TOKENS[$INDEX]}"
+            echo "selected=$SELECTED" >> "$GITHUB_OUTPUT"
+            echo "Token pool: ${#VALID_TOKENS[@]} tokens available, selected index $INDEX"
+          else
+            echo "::add-mask::$SINGLE"
+            echo "selected=$SINGLE" >> "$GITHUB_OUTPUT"
+            echo "Using single CLAUDE_CODE_OAUTH_TOKEN"
+          fi
+        env:
+          POOL: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN_POOL }}
+          SINGLE: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@6c61301d8e1ee91bef7b65172f93462bbb216394 # ratchet:anthropics/claude-code-action@v1
         with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_code_oauth_token: ${{ steps.select-token.outputs.selected }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true # ✨ Enables tracking comments
           claude_args: >-
