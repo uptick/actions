@@ -353,7 +353,7 @@ jobs:
         run: pip3 install poetry==${{ inputs.poetry-version }}
 
       - name: Cache Poetry Dependencies
-        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # ratchet:actions/cache@v5
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5
         if: inputs.poetry
         with:
           path: ~/.cache/pypoetry
@@ -401,7 +401,7 @@ jobs:
           echo "pnpm_cache_dir=$(pnpm store path)" >> $GITHUB_OUTPUT
 
       - name: Setup PNPM Cache
-        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # ratchet:actions/cache@v5
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5
         if: inputs.pnpm
         with:
           path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
